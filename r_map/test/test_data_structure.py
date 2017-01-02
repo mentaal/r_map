@@ -1,3 +1,4 @@
+from copy import deepcopy
 def test_get_item(data):
 
     spi = data['spi']
@@ -16,3 +17,7 @@ def test_walk(data):
 
     for item in block.walk(levels=3):
         print(item)
+
+def test_copy(data):
+
+    data2 = deepcopy(data)

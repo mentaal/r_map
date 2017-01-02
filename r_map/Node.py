@@ -6,17 +6,21 @@ class NodeMeta(type):
     '''used to magically update the nb_attrs'''
     def __new__(mcs, name, bases, attrs):
         _nb_attrs = attrs.get('_nb_attrs', ())
+        if name == 'Node':
+            attrs['class_registry'] = {}
         for b in bases:
             if hasattr(b, '_nb_attrs'):
                 _nb_attrs += b._nb_attrs
         attrs['_nb_attrs'] = _nb_attrs
-        return super().__new__(mcs, name, bases, attrs)
+        new_class = super().__new__(mcs, name, bases, attrs)
+        new_class.class_registry[name] = new_class
+        return new_class
 
 class Node(metaclass=NodeMeta):
     '''A node in the tree data structure representing the register map'''
     #these names are not to be looked for in children
     #when pickling, only be concerned with these
-    _nb_attrs = ('name', 'parent', 'descr', 'doc')
+    _nb_attrs = ('name', 'descr', 'doc')
 
 
     def __init__(self, name, parent=None, descr=None, doc=None, uuid=None):
@@ -69,9 +73,9 @@ class Node(metaclass=NodeMeta):
         return (child for child in self._children.values())
 
     def _serialize(self):
-        sg = attrgetter(*self._nb_attrs)
-        me = {k:v for (k,v) in zip(self._nb_attrs, sg(self))
-                if v is not None}
+        #sg = attrgetter(*self._nb_attrs)
+        items = ((k,getattr(self, k)) for k in self._nb_attrs)
+        me = {k:v for (k,v) in items if v is not None}
         #print('me dictionary: ', me)
         me['class_type'] = type(self).__name__
         #change the parent from being an object reference to a uuid reference
@@ -98,6 +102,33 @@ class Node(metaclass=NodeMeta):
 
     def __len__(self):
         return len(self._children)
+
+    #def __getstate__(self):
+    #    items = ((k,getattr(self, k)) for k in self._nb_attrs)
+    #    me = {k:v for (k,v) in items if v is not None}
+    #    me['class_type'] = type(self).__name__
+    #    me['children'] = tuple(child.__getstate__() for child in self)
+    #    return me
+
+
+    #def __setstate__(self, state):
+    #    _children = OD()
+    #    children = state.pop('children')
+    #    class_type = state.pop('class_type')
+    #    self.parent = state.pop('parent', None)
+    #    self.__dict__.update(state)
+    #    #print('in __setstate__ for: {} of type: {}'.format(
+    #    #    self.name, class_type))
+
+    #    for child_state in children:
+    #        t_name = child_state.pop('class_type')
+    #        T = self.class_registry[t_name]
+    #        t = T(
+    #        _children[t.name] = t
+    #    self._children = _children
+
+
+
 
     #def __repr__(self):
     #    items = zip(self._nb_attrs, itemgetter(self._nb_attrs)(self))
