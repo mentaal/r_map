@@ -56,7 +56,7 @@ class Node(metaclass=NodeMeta):
         return local_files + children
 
     def __getattr__(self, name):
-        if name in self._nb_attrs:
+        if name in self._nb_attrs or name[:2] == '__':
             raise AttributeError(name)
         try:
             return self._children[name]
@@ -122,8 +122,10 @@ class Node(metaclass=NodeMeta):
 
     #    for child_state in children:
     #        t_name = child_state.pop('class_type')
+    #        child_name = child_state.pop('name')
     #        T = self.class_registry[t_name]
-    #        t = T(
+    #        t = T(name=child_name)
+    #        
     #        _children[t.name] = t
     #    self._children = _children
 
