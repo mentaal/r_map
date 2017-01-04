@@ -103,50 +103,11 @@ class Node(metaclass=NodeMeta):
     def __len__(self):
         return len(self._children)
 
-    #def __getstate__(self):
-    #    items = ((k,getattr(self, k)) for k in self._nb_attrs)
-    #    me = {k:v for (k,v) in items if v is not None}
-    #    me['class_type'] = type(self).__name__
-    #    me['children'] = tuple(child.__getstate__() for child in self)
-    #    return me
+    def __repr__(self):
+        items = ((k,getattr(self, k)) for k in self._nb_attrs)
+        me = {k:v for (k,v) in items if v is not None}
 
-
-    #def __setstate__(self, state):
-    #    _children = OD()
-    #    children = state.pop('children')
-    #    class_type = state.pop('class_type')
-    #    self.parent = state.pop('parent', None)
-    #    self.__dict__.update(state)
-    #    #print('in __setstate__ for: {} of type: {}'.format(
-    #    #    self.name, class_type))
-
-    #    for child_state in children:
-    #        t_name = child_state.pop('class_type')
-    #        child_name = child_state.pop('name')
-    #        T = self.class_registry[t_name]
-    #        t = T(name=child_name)
-    #        
-    #        _children[t.name] = t
-    #    self._children = _children
-
-
-
-
-    #def __repr__(self):
-    #    items = zip(self._nb_attrs, itemgetter(self._nb_attrs)(self))
-    #    filtered = ((k,v) for k,v in items if v is not None)
-    #    me = {k:('{}'.format(v) if type(v) is str else v) for k,v in filtered}
-    #    me['class_type'] = type(self).__name__
-    #    #change the parent from being an object reference to a uuid reference
-    #    if self.parent:
-    #        me['parent'] = self.parent.uuid
-
-    #    arg_strings = ('{}={}'.format(k,v) for (k,v) in sorted(args.items(),
-    #        key=lambda x:x[0]))
-    #    return '{}({})'.format(type(self).__name__, ','.join(arg_strings))
-
-
-
-
-
+        arg_strings = ('{}={}'.format(k,v) for (k,v) in sorted(me.items(),
+            key=lambda x:x[0]))
+        return '{}({})'.format(type(self).__name__, ','.join(arg_strings))
 

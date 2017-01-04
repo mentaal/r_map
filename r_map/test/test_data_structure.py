@@ -19,5 +19,16 @@ def test_walk(data):
         print(item)
 
 def test_copy(data):
+    c = deepcopy(data)
+    i = iter(data)
+    n = next(i)
+    print(dir(c))
+    i = iter(c)
+    item = next(i)
+    print(item)
+    print(item.parent)
 
-    data2 = deepcopy(data)
+def test_repr(data):
+    item = next(iter(data))
+
+    print(repr(item))
