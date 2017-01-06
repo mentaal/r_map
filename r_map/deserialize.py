@@ -1,25 +1,10 @@
 from .Node import Node
-from .BitField import BitField
-from .Register import Register
-from .RegisterMap import RegisterMap
-
-class NodeFactory():
-    classes = {
-            'Node'       : Node,
-            'BitField'   : BitField,
-            'Register'   : Register,
-            'RegisterMap': RegisterMap,
-            }
-    @classmethod
-    def make(cls, to_make, *args, **kwargs):
-        return cls.classes[to_make](*args, **kwargs)
-
 def deserialize(d):
     objs = {}
     for uuid, node in d.items():
         node_copy = node.copy()
-        class_type = node_copy.pop('class_type')
-        objs[uuid] = NodeFactory.make(class_type, uuid=uuid, **node_copy)
+        _class = Node.class_registry[node_copy.pop('class_type')]
+        objs[uuid] = _class(uuid=uuid, **node_copy)
 
     root = None
     #now walk through all the items again and setup node references
