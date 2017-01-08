@@ -1,4 +1,4 @@
-from r_map.deserialize import deserialize
+from r_map.Node import Node
 def test_serialize_to_dict(data):
     d =  dict(data._serialize())
     #print("Number of items: {}".format(len(d)))
@@ -7,7 +7,7 @@ def test_serialize_to_dict(data):
     #        item['name'], item['class_type'], item['parent']))
 
     #now deserialize it
-    root = deserialize(d)
+    root = Node.deserialize(d)
 
     d2 = dict(root._serialize())
 
