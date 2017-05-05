@@ -20,3 +20,9 @@ class AddressedNode(Node):
     @address.setter
     def address(self, val):
         self.local_address = address
+
+    def __dir__(self):
+        d = super().__dir__()
+        d.append('address')
+        return d
+

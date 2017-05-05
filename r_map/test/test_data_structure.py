@@ -4,6 +4,7 @@ def test_get_item(data):
     spi = data['spi']
 
     cfg0 = spi.cfg0
+    print('cfg: {}'.format(cfg0))
     field = spi.cfg0['bf0']
     field = spi.cfg0.bf0
     #field = spi.bf0
