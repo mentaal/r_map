@@ -7,7 +7,7 @@ def test_serialize_to_dict(data):
     #        item['name'], item['class_type'], item['parent']))
 
     #now deserialize it
-    root = Node.deserialize(d)
+    root = Node._deserialize(d)
 
     d2 = dict(root._serialize())
 

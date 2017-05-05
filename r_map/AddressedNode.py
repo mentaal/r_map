@@ -17,12 +17,3 @@ class AddressedNode(Node):
             return self.local_address + self.parent.address #allows for relative addressing
         else:
             return self.local_address
-    @address.setter
-    def address(self, val):
-        self.local_address = address
-
-    def __dir__(self):
-        d = super().__dir__()
-        d.append('address')
-        return d
-

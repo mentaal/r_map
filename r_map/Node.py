@@ -7,13 +7,13 @@ class NodeMeta(type):
     def __new__(mcs, name, bases, attrs):
         _nb_attrs = attrs.get('_nb_attrs', ())
         if name == 'Node':
-            attrs['class_registry'] = {}
+            attrs['_class_registry'] = {}
         for b in bases:
             if hasattr(b, '_nb_attrs'):
                 _nb_attrs += b._nb_attrs
         attrs['_nb_attrs'] = _nb_attrs
         new_class = super().__new__(mcs, name, bases, attrs)
-        new_class.class_registry[name] = new_class
+        new_class._class_registry[name] = new_class
         return new_class
 
 class Node(metaclass=NodeMeta):
@@ -55,9 +55,10 @@ class Node(metaclass=NodeMeta):
 
 
     def __dir__(self):
-        local_files = [f for f in self.__dict__ if f[0] != '_']
-        children    = [c for c in self._children]
-        return local_files + children
+        local_files = {f for f in vars(self) if f[0] != '_'}
+        children    = {c for c in self._children}
+        class_objs  = {s for s in dir(type(self)) if s[0] != '_'}
+        return list(local_files | children | class_objs)
 
     def __getattr__(self, name):
         if name in self._nb_attrs or name[:2] == '__':
@@ -75,19 +76,6 @@ class Node(metaclass=NodeMeta):
 
     def __iter__(self):
         return (child for child in self._children.values())
-
-    def _serialize(self):
-        #sg = attrgetter(*self._nb_attrs)
-        items = ((k,getattr(self, k)) for k in self._nb_attrs)
-        me = {k:v for (k,v) in items if v is not None}
-        #print('me dictionary: ', me)
-        me['class_type'] = type(self).__name__
-        #change the parent from being an object reference to a uuid reference
-        if self.parent:
-            me['parent'] = self.parent.uuid
-        for node in self:
-            yield from node._serialize()
-        yield self.uuid, me
 
     def walk(self, levels=2, top_down=True):
         'return up to <levels> worth of nodes'
@@ -115,12 +103,24 @@ class Node(metaclass=NodeMeta):
             key=lambda x:x[0]))
         return '{}({})'.format(type(self).__name__, ','.join(arg_strings))
 
+    def _serialize(self):
+        #sg = attrgetter(*self._nb_attrs)
+        items = ((k,getattr(self, k)) for k in self._nb_attrs)
+        me = {k:v for (k,v) in items if v is not None}
+        me['class_type'] = type(self).__name__
+        #change the parent from being an object reference to a uuid reference
+        if self.parent:
+            me['parent'] = self.parent.uuid
+        for node in self:
+            yield from node._serialize()
+        yield self.uuid, me
+
     @classmethod
-    def deserialize(cls, d):
+    def _deserialize(cls, d):
         objs = {}
         for uuid, node in d.items():
             node_copy = node.copy()
-            _class = cls.class_registry[node_copy.pop('class_type')]
+            _class = cls._class_registry[node_copy.pop('class_type')]
             objs[uuid] = _class(uuid=uuid, **node_copy)
 
         root = None
@@ -147,7 +147,7 @@ class Node(metaclass=NodeMeta):
 
 
     @classmethod
-    def register_default_classes(cls):
+    def _register_default_classes(cls):
         from .Register import Register
         from .RegisterMap import RegisterMap
         from .BitField import BitField
