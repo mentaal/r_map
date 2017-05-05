@@ -33,3 +33,7 @@ def test_repr(data):
     item = next(iter(data))
 
     print(repr(item))
+
+def test_bad_name(data):
+    assert data.name != data['name']
+    assert data['name'] is data._children['name']

@@ -38,9 +38,12 @@ def get_data():
 
 
 
-    spi = RegisterMap('spi', root, descr='A registermap defining the SPI block', local_address=0x40000000)
+    spi = RegisterMap('spi', root, descr='A registermap defining the SPI block',
+            local_address=0x40000000)
     cfgs = [Register('cfg{}'.format(i), spi) for i in range(10)]
     for cfg in cfgs:
         bfs = [BitField('bf{}'.format(i), cfg) for i in range(10)]
+    dodgy = RegisterMap('name', root, descr='A dodgily name registermap!',
+            local_address=0x50000000)
 
     return root
