@@ -28,7 +28,7 @@ class Node(metaclass=NodeMeta):
         Args:
             name(str)   : A the name of the Node
             parent(Node): Either a Node or None
-            descr(str)  : A description for the node
+            descr(str)  : A description for the node (usually shorter than doc)
             doc(str)    : A documentation string for the node
         '''
         self.name     = name
@@ -39,6 +39,10 @@ class Node(metaclass=NodeMeta):
         if self.parent and isinstance(self.parent, Node):
             self.parent[name] = self
         self._children = OD()
+        if descr:
+            self.__doc__ = descr
+        elif doc:
+            self.__doc__ = doc
 
         if uuid is None:
             self.uuid = uuid4().hex
@@ -140,3 +144,11 @@ class Node(metaclass=NodeMeta):
         if root is None:
             raise KeyError("Could not find the root node!")
         return root
+
+
+    @classmethod
+    def register_default_classes(cls):
+        from .Register import Register
+        from .RegisterMap import RegisterMap
+        from .BitField import BitField
+
