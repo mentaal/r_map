@@ -103,50 +103,40 @@ class Node(metaclass=NodeMeta):
     def __len__(self):
         return len(self._children)
 
-    #def __getstate__(self):
-    #    items = ((k,getattr(self, k)) for k in self._nb_attrs)
-    #    me = {k:v for (k,v) in items if v is not None}
-    #    me['class_type'] = type(self).__name__
-    #    me['children'] = tuple(child.__getstate__() for child in self)
-    #    return me
+    def __repr__(self):
+        items = ((k,getattr(self, k)) for k in self._nb_attrs)
+        me = {k:v for (k,v) in items if v is not None}
 
+        arg_strings = ('{}={}'.format(k,v) for (k,v) in sorted(me.items(),
+            key=lambda x:x[0]))
+        return '{}({})'.format(type(self).__name__, ','.join(arg_strings))
 
-    #def __setstate__(self, state):
-    #    _children = OD()
-    #    children = state.pop('children')
-    #    class_type = state.pop('class_type')
-    #    self.parent = state.pop('parent', None)
-    #    self.__dict__.update(state)
-    #    #print('in __setstate__ for: {} of type: {}'.format(
-    #    #    self.name, class_type))
+    @classmethod
+    def deserialize(cls, d):
+        objs = {}
+        for uuid, node in d.items():
+            node_copy = node.copy()
+            _class = cls.class_registry[node_copy.pop('class_type')]
+            objs[uuid] = _class(uuid=uuid, **node_copy)
 
-    #    for child_state in children:
-    #        t_name = child_state.pop('class_type')
-    #        child_name = child_state.pop('name')
-    #        T = self.class_registry[t_name]
-    #        t = T(name=child_name)
-    #        
-    #        _children[t.name] = t
-    #    self._children = _children
+        root = None
+        #now walk through all the items again and setup node references
+        for uuid, node in objs.items():
+            parent_uuid = node.parent
+            if parent_uuid != None:
+                try:
+                    parent_node = objs[parent_uuid]
+                except KeyError as e:
+                    raise KeyError(
+                        "Can't find parent for node: {} (parent={})".format(node,
+                            parent_uuid))
+                parent_node[node.name] = node
+                node.parent = parent_node
 
-
-
-
-    #def __repr__(self):
-    #    items = zip(self._nb_attrs, itemgetter(self._nb_attrs)(self))
-    #    filtered = ((k,v) for k,v in items if v is not None)
-    #    me = {k:('{}'.format(v) if type(v) is str else v) for k,v in filtered}
-    #    me['class_type'] = type(self).__name__
-    #    #change the parent from being an object reference to a uuid reference
-    #    if self.parent:
-    #        me['parent'] = self.parent.uuid
-
-    #    arg_strings = ('{}={}'.format(k,v) for (k,v) in sorted(args.items(),
-    #        key=lambda x:x[0]))
-    #    return '{}({})'.format(type(self).__name__, ','.join(arg_strings))
-
-
-
-
-
-
+            else: #this node is the root
+                root = node
+                root.parent = None
+            #print('Now on node: {}, parent: {}'.format(node, node.parent))
+        if root is None:
+            raise KeyError("Could not find the root node!")
+        return root
