@@ -37,3 +37,24 @@ def test_repr(data):
 def test_bad_name(data):
     assert data.name != data['name']
     assert data['name'] is data._children['name']
+
+
+def test_bit_reg_linkage(data):
+    #get first available register
+    w = (m for m in data)
+    m = next(w)
+    rs = (r for r in m)
+    r = next(rs)
+    print("Register: ", r)
+
+    v = 0x12345678
+    r.value = v
+    for bf in r:
+        print("bitfield: ", bf)
+        field_expected_value = (r.value >> bf.position) & bf.field_mask
+        assert field_expected_value == bf.value
+
+    new_value = 12345678
+    for bf in r:
+        bf.value = (new_value >> bf.position) & bf.field_mask
+    assert r.value == new_value

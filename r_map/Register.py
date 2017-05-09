@@ -5,4 +5,7 @@ class Register(AddressedNode):
         super().__init__(*args, **kwargs)
         self.width   = width
         self.reset   = reset
+        self.value = reset
+
+
 
