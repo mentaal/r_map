@@ -5,6 +5,7 @@ from r_map.RegisterMap import RegisterMap
 from random import randint, choice
 from string import ascii_letters, digits
 
+
 first_letter = ascii_letters
 letters      = ascii_letters + digits
 
@@ -15,6 +16,8 @@ def get_names(amount, max_length=40):
                 for i in range(1, randint(2, max_length)))
 
 def get_data():
+    #perform registration
+    Node._register_default_classes()
     root = Node('root', None)
     for map_incr, rmap_name in enumerate(get_names(amount = randint(50, 100))):
         block = RegisterMap(rmap_name, root,

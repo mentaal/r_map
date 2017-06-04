@@ -2,18 +2,39 @@ from collections import OrderedDict as OD
 from uuid import uuid4
 from itertools import chain
 from operator import attrgetter
+import logging
+logger = logging.getLogger(__name__)
+
+class Registry():
+    registry = {}
+
+    def __get__(self, instance, owner):
+        return self.registry
+
+    def __set__(self, instance, value):
+        raise AttributeError("Cannot set attribute - read only")
+
 class NodeMeta(type):
     '''used to magically update the nb_attrs'''
     def __new__(mcs, name, bases, attrs):
         _nb_attrs = attrs.get('_nb_attrs', ())
-        if name == 'Node':
-            attrs['_class_registry'] = {}
         for b in bases:
             if hasattr(b, '_nb_attrs'):
                 _nb_attrs += b._nb_attrs
+            if hasattr(b, '_class_registry'):
+                if '_class_registry' not in attrs:
+                    attrs['_class_registry'] = b.__dict__['_class_registry']
         attrs['_nb_attrs'] = _nb_attrs
+        if '_class_registry' not in attrs:
+            #make a read-only data descriptor to prevent user from clobbering
+            #registry
+            attrs['_class_registry'] = Registry()
+        r = attrs['_class_registry'].registry
+
         new_class = super().__new__(mcs, name, bases, attrs)
-        new_class._class_registry[name] = new_class
+        if name not in r and name == 'Node':
+            #only automatically register the base class
+            r[name] = new_class
         return new_class
 
 class Node(metaclass=NodeMeta):
@@ -21,6 +42,7 @@ class Node(metaclass=NodeMeta):
     #these names are not to be looked for in children
     #when pickling, only be concerned with these
     _nb_attrs = ('name', 'descr', 'doc')
+
 
 
     def __init__(self, name, parent=None, descr=None, doc=None, uuid=None):
@@ -145,10 +167,25 @@ class Node(metaclass=NodeMeta):
             raise KeyError("Could not find the root node!")
         return root
 
+    @classmethod
+    def _register(cls, name=None):
+        '''Register derived class with base class. Name is optional and if
+        omitted, defaults to the derived class' name'''
+        if name is None:
+            name = cls.__name__
+        logger.debug("Registering: %s under name: %s", cls, name)
+        cls._class_registry[name] = cls
+
 
     @classmethod
     def _register_default_classes(cls):
-        from .Register import Register
-        from .RegisterMap import RegisterMap
-        from .BitField import BitField
+        print("Registering default classes...")
+        import importlib
+        class_names = ('Register', 'RegisterMap', 'BitField')
+        for c_str in class_names:
+            module = importlib.import_module('.'+c_str, 'r_map')
+            c = getattr(module, c_str)
+            c._register()
+
+
 
