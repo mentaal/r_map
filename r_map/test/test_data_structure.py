@@ -1,8 +1,11 @@
 from copy import deepcopy
 def test_get_item(data):
+    "test the different ways that an item can be referenced"
 
+    #key based lookup
     spi = data['spi']
 
+    #attribute based
     cfg0 = spi.cfg0
     print('cfg: {}'.format(cfg0))
     field = spi.cfg0['bf0']
@@ -10,9 +13,11 @@ def test_get_item(data):
     #field = spi.bf0
 
 def test_list_node(data):
+    "display the node's public attributes and the names of its children"
     print(dir(data))
 
 def test_walk(data):
+    "obtain an iterator from the root object and get the next item"
     i = iter(data)
     block = next(i)
 
