@@ -125,7 +125,7 @@ class Node(metaclass=NodeMeta):
             key=lambda x:x[0]))
         return '{}({})'.format(type(self).__name__, ','.join(arg_strings))
 
-    def _serialize(self):
+    def _serialize(self, recurse=True):
         #sg = attrgetter(*self._nb_attrs)
         items = ((k,getattr(self, k)) for k in self._nb_attrs)
         me = {k:v for (k,v) in items if v is not None}
@@ -133,8 +133,9 @@ class Node(metaclass=NodeMeta):
         #change the parent from being an object reference to a uuid reference
         if self.parent:
             me['parent'] = self.parent.uuid
-        for node in self:
-            yield from node._serialize()
+        if recurse:
+            for node in self:
+                yield from node._serialize()
         yield self.uuid, me
 
     @classmethod

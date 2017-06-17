@@ -11,6 +11,7 @@ def test_get_item(data):
     field = spi.cfg0['bf0']
     field = spi.cfg0.bf0
     #field = spi.bf0
+    print(field)
 
 def test_list_node(data):
     "display the node's public attributes and the names of its children"
