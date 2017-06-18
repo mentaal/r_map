@@ -12,14 +12,16 @@ class UsageRegistry():
         self.registry = set()
 
     def add_registry(self, cls):
-        cls.__getattribute__ = type(self).use_registry
+        def closure(self):
+            def func(target_self, key):
+                item = object.__getattribute__(target_self, key)
+                _nb_attrs = object.__getattribute__(target_self, '_nb_attrs')
+                if key in _nb_attrs:
+                    self.registry.add(target_self)
+                return item
+            return func
 
-    def use_registry(self, key):
-        item = object.__getattribute__(self, key)
-        nb_attrs = object.__getattribute__(self, '_nb_attrs')
-        if key in nb_attrs:
-            self.registry.add(self)
-        return item
+        cls.__getattribute__ = closure(self)
 
     def complete_tree(self):
         #use a shallow copy of registry as modifying a set whilst iterating over
@@ -36,8 +38,4 @@ class UsageRegistry():
 
     def _serialize(self):
         for item in self.registry:
-            yield item._serialize(recurse=False)
-
-
-
-
+            yield from item._serialize(recurse=False)
