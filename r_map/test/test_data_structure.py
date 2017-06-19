@@ -22,7 +22,7 @@ def test_walk(data):
     i = iter(data)
     block = next(i)
 
-    for item in block.walk(levels=3):
+    for item in block._walk(levels=3):
         print(item)
 
 def test_copy(data):

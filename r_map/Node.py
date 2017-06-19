@@ -6,6 +6,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Registry():
+    """Registry used to hold mappings of register map elements to class
+    implementations"""
     registry = {}
 
     def __get__(self, instance, owner):
@@ -99,7 +101,7 @@ class Node(metaclass=NodeMeta):
     def __iter__(self):
         return (child for child in self._children.values())
 
-    def walk(self, levels=2, top_down=True):
+    def _walk(self, levels=2, top_down=True):
         'return up to <levels> worth of nodes'
         if levels == 0: #i am a leaf node
             yield self
@@ -107,7 +109,10 @@ class Node(metaclass=NodeMeta):
         if top_down:
             yield self
         for node in self:
-            yield from node.walk(levels=levels-1, top_down=top_down)
+            if levels >= 0:
+                #if a negative number is supplied, all elements below will be traversed
+                levels -= 1
+            yield from node._walk(levels=levels, top_down=top_down)
         if not top_down:
             yield self
 
