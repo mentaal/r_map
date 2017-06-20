@@ -1,11 +1,11 @@
 from .Node import Node
 class AddressedNode(Node):
     _nb_attrs = ('local_address',)
-    def __init__(self, *args, local_address=0, **kwargs):
+    def __init__(self, local_address=0, **kwargs):
         '''Args:
             local_address(int): local address is the address of the node without
             consideration of any offset that a parent node may impose'''
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
         self.local_address = local_address
 
     def __str__(self):

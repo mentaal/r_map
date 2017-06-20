@@ -47,7 +47,7 @@ class Node(metaclass=NodeMeta):
 
 
 
-    def __init__(self, name, parent=None, descr=None, doc=None, uuid=None):
+    def __init__(self, **kwargs):
         '''
         Args:
             name(str)   : A the name of the Node
@@ -55,23 +55,14 @@ class Node(metaclass=NodeMeta):
             descr(str)  : A description for the node (usually shorter than doc)
             doc(str)    : A documentation string for the node
         '''
-        self.name     = name
-        self.parent   = parent
-        self.descr    = descr
-        self.doc      = doc
+        for key in self._nb_attrs+('parent',):
+            setattr(self, key, kwargs.get(key, None))
         #automatically install it in the parent
         if self.parent and isinstance(self.parent, Node):
-            self.parent[name] = self
+            self.parent[self.name] = self
         self._children = OD()
-        if descr:
-            self.__doc__ = descr
-        elif doc:
-            self.__doc__ = doc
-
-        if uuid is None:
-            self.uuid = uuid4().hex
-        else:
-            self.uuid = uuid
+        self.__doc__ = next((i for i in (self.descr, self.doc) if i), 'No description')
+        self.uuid = kwargs.get('uuid', uuid4().hex)
 
 
     def __str__(self):
@@ -109,10 +100,12 @@ class Node(metaclass=NodeMeta):
         if top_down:
             yield self
         for node in self:
+            #if a negative number is supplied, all elements below will be traversed
             if levels >= 0:
-                #if a negative number is supplied, all elements below will be traversed
-                levels -= 1
-            yield from node._walk(levels=levels, top_down=top_down)
+                new_levels = levels -1
+            else:
+                new_levels = levels
+            yield from node._walk(levels=new_levels, top_down=top_down)
         if not top_down:
             yield self
 

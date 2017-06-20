@@ -18,13 +18,13 @@ def get_names(amount, max_length=40):
 def get_data():
     #perform registration
     Node._register_default_classes()
-    root = Node('root', None)
+    root = Node(name='root')
     for map_incr, rmap_name in enumerate(get_names(amount = randint(50, 100))):
-        block = RegisterMap(rmap_name, root,
+        block = RegisterMap(name=rmap_name, parent=root,
                 local_address =0x40000000 + 0x1000*map_incr)
         for reg_incr, reg_name in enumerate(get_names(
                                                 amount = randint(30, 200))):
-            reg = Register(reg_name, block, local_address = 0x4*reg_incr)
+            reg = Register(name=reg_name, parent=block, local_address = 0x4*reg_incr)
             avail_width = 32
             current_position = 0
             for bf_incr, bf_name in enumerate(get_names(
@@ -34,19 +34,19 @@ def get_data():
                 bf_width = randint(1, 33)
                 if avail_width < bf_width:
                     bf_width = avail_width
-                bf = BitField(bf_name, reg, width=bf_width,
+                bf = BitField(name=bf_name, parent=reg, width=bf_width,
                             position=current_position)
                 current_position += bf_width
                 avail_width -= bf_width
 
 
 
-    spi = RegisterMap('spi', root, descr='A registermap defining the SPI block',
+    spi = RegisterMap(name='spi', parent=root, descr='A registermap defining the SPI block',
             local_address=0x40000000)
-    cfgs = [Register('cfg{}'.format(i), spi) for i in range(10)]
+    cfgs = [Register(name='cfg{}'.format(i), parent=spi) for i in range(10)]
     for cfg in cfgs:
-        bfs = [BitField('bf{}'.format(i), cfg) for i in range(10)]
-    dodgy = RegisterMap('name', root, descr='A dodgily name registermap!',
+        bfs = [BitField(name='bf{}'.format(i), parent=cfg) for i in range(10)]
+    dodgy = RegisterMap(name='name', parent=root, descr='A dodgily name registermap!',
             local_address=0x50000000)
 
     return root
