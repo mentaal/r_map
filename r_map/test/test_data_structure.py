@@ -53,6 +53,8 @@ def test_bit_reg_linkage(data):
     r = next(rs)
     print("Register: ", r)
 
+    print("Register access: {}".format(r.access))
+
     v = 0x12345678
     r.value = v
     for bf in r:

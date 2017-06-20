@@ -5,5 +5,9 @@ class Register(AddressedNode):
         super().__init__(width=width, reset=reset, **kwargs)
         self.value = reset
 
+    @property
+    def access(self):
+        print("eh?")
+        return '|'.join(sorted(set(o.access for o in self._children.values())))
 
 

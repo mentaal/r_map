@@ -1,8 +1,9 @@
 from .Node import Node
 class BitField(Node):
-    _nb_attrs = ('width', 'position', 'reset')
-    def __init__(self, width=32, position=0, reset=0, **kwargs):
-        super().__init__(width=width, position=position, reset=reset, **kwargs)
+    _nb_attrs = ('width', 'position', 'reset', 'access')
+    def __init__(self, width=32, position=0, reset=0, access='XX', **kwargs):
+        super().__init__(width=width, position=position, reset=reset,
+                access=access, **kwargs)
         self.field_mask = (1 << width)-1
         self.register_mask = ((1<<width)-1) << position
 
@@ -18,6 +19,4 @@ class BitField(Node):
         v = self.parent.value & ~self.register_mask
         v |= (new_value << self.position)&self.register_mask
         self.parent.value = v
-
-
 

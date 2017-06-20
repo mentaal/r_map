@@ -2,9 +2,11 @@ from r_map.Node import Node
 from r_map.Register import Register
 from r_map.BitField import BitField
 from r_map.RegisterMap import RegisterMap
-from random import randint, choice
+from random import randint, choice, choices
 from string import ascii_letters, digits
+from functools import partial
 
+get_access = partial(choices, ('RW', 'RW1C', 'W', 'R', 'XX'), (100, 10, 20, 20, 20))
 
 first_letter = ascii_letters
 letters      = ascii_letters + digits
@@ -35,7 +37,7 @@ def get_data():
                 if avail_width < bf_width:
                     bf_width = avail_width
                 bf = BitField(name=bf_name, parent=reg, width=bf_width,
-                            position=current_position)
+                            position=current_position, access=get_access()[0])
                 current_position += bf_width
                 avail_width -= bf_width
 

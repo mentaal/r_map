@@ -1,4 +1,5 @@
 from r_map.Node import Node
+import json
 def test_serialize_to_dict(data):
     d =  dict(data._serialize())
     #print("Number of items: {}".format(len(d)))
@@ -13,4 +14,8 @@ def test_serialize_to_dict(data):
 
     assert d == d2
 
+    #with open('temp.txt', 'w') as F:
+    #    json.dump(d, F, indent=4)
+
     print("Test data has: {} elements".format(len(d2)))
+
