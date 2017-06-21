@@ -12,6 +12,14 @@ def test_get_item(data):
     field = spi.cfg0.bf0
     #field = spi.bf0
     print(field)
+    print("Updating field value to spi_enabled")
+    field.value = field.spi_enabled.value
+    print(field)
+    print(spi.cfg0.bf1)
+    assert field.annotation == field.spi_enabled.name
+
+    print('bf0 annotation: {}'.format(field.annotation))
+    print('bf1 annotation: {}'.format(spi.cfg0.bf1.annotation))
 
 def test_list_node(data):
     "display the node's public attributes and the names of its children"

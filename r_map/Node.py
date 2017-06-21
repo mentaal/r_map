@@ -159,8 +159,13 @@ class Node(metaclass=NodeMeta):
                 node.parent = parent_node
 
             else: #this node is the root
-                root = node
-                root.parent = None
+                if root is None:
+                    root = node
+                    logger.debug("Setting root to: %s", node)
+
+                    root.parent = None
+                else:
+                    raise ValueError("multiple nodes found which don't have a parent - should only be a single root node! This for Node: {}".format(node))
             #print('Now on node: {}, parent: {}'.format(node, node.parent))
         if root is None:
             raise KeyError("Could not find the root node!")
@@ -180,7 +185,7 @@ class Node(metaclass=NodeMeta):
     def _register_default_classes(cls):
         print("Registering default classes...")
         import importlib
-        class_names = ('Register', 'RegisterMap', 'BitField')
+        class_names = ('Register', 'RegisterMap', 'BitField', 'Enumeration')
         for c_str in class_names:
             module = importlib.import_module('.'+c_str, 'r_map')
             c = getattr(module, c_str)

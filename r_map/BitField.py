@@ -8,8 +8,8 @@ class BitField(Node):
         self.register_mask = ((1<<width)-1) << position
 
     def __str__(self):
-        return super().__str__() + ' width: {}, position: {}, reset: {:#x}'.format(
-                self.width, self.position, self.reset)
+        return super().__str__() + ' width: {}, position: {}, reset: {:#x}, value: {}'.format(
+                self.width, self.position, self.reset, self.annotation)
 
     @property
     def value(self):
@@ -19,4 +19,8 @@ class BitField(Node):
         v = self.parent.value & ~self.register_mask
         v |= (new_value << self.position)&self.register_mask
         self.parent.value = v
+
+    @property
+    def annotation(self):
+        return next((a.name for a in self if a.value == self.value), hex(self.value))
 
