@@ -1,11 +1,13 @@
 from .Node import Node
 class BitField(Node):
     _nb_attrs = ('width', 'position', 'reset', 'access')
-    def __init__(self, width=32, position=0, reset=0, access='XX', **kwargs):
+    def __init__(self, width=1, position=0, reset=0, access='XX', **kwargs):
         super().__init__(width=width, position=position, reset=reset,
                 access=access, **kwargs)
         self.field_mask = (1 << width)-1
         self.register_mask = ((1<<width)-1) << position
+        if width < 1:
+            raise ValueError("Width needs to be >= 1")
 
     def __str__(self):
         return super().__str__() + ' width: {}, position: {}, reset: {:#x}, value: {}'.format(

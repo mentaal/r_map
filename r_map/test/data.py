@@ -50,7 +50,7 @@ def get_data():
             local_address=0x40000000)
     cfgs = [Register(name='cfg{}'.format(i), parent=spi) for i in range(10)]
     for cfg in cfgs:
-        bfs = [BitField(name='bf{}'.format(i), parent=cfg) for i in range(10)]
+        bfs = [BitField(name='bf{}'.format(i), parent=cfg, width=randint(1,2)) for i in range(10)]
         enum = Enumeration(name='spi_enabled', value=1, parent=bfs[0])
         enum2 = Enumeration(name='spi_disabled', value=0, parent=bfs[0])
     dodgy = RegisterMap(name='name', parent=root, descr='A dodgily name registermap!',
