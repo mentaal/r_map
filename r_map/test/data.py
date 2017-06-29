@@ -48,9 +48,25 @@ def get_data():
 
     spi = RegisterMap(name='spi', parent=root, descr='A registermap defining the SPI block',
             local_address=0x40000000)
-    cfgs = [Register(name='cfg{}'.format(i), parent=spi) for i in range(10)]
+    cfgs = [Register(name='cfg{}'.format(i), parent=spi) for i in range(randint(10, 32))]
+    def get_field(parent):
+        remaining_width = 32
+        current_position = 0
+        field_index = 0
+        while remaining_width:
+            new_width = randint(1, remaining_width)
+            yield BitField(name='bf{}'.format(field_index),
+                    position=current_position,parent=parent, width = new_width)
+            remaining_width -= new_width
+            current_position += new_width
+            field_index += 1
+
+
+
+
     for cfg in cfgs:
-        bfs = [BitField(name='bf{}'.format(i), parent=cfg, width=randint(1,2)) for i in range(10)]
+        available_width = 32
+        bfs = [f for f in get_field(cfg)]
         enum = Enumeration(name='spi_enabled', value=1, parent=bfs[0])
         enum2 = Enumeration(name='spi_disabled', value=0, parent=bfs[0])
     dodgy = RegisterMap(name='name', parent=root, descr='A dodgily name registermap!',
