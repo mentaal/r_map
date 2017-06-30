@@ -6,6 +6,7 @@ class BitField(Node):
                 access=access, **kwargs)
         self.field_mask = (1 << width)-1
         self.register_mask = ((1<<width)-1) << position
+        self._value = self.reset
         if width < 1:
             raise ValueError("Width needs to be >= 1")
 
@@ -15,12 +16,11 @@ class BitField(Node):
 
     @property
     def value(self):
-        return (self.parent.value >> self.position) & self.field_mask
+        return self._value
+
     @value.setter
     def value(self, new_value):
-        v = self.parent.value & ~self.register_mask
-        v |= (new_value << self.position)&self.register_mask
-        self.parent.value = v
+        self._value = new_value & ((1<<self.width)-1)
 
     @property
     def annotation(self):
