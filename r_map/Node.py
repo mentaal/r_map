@@ -66,7 +66,7 @@ class Node(metaclass=NodeMeta):
 
 
     def __str__(self):
-        return '{}: {}'.format(type(self).__name__,self.name)
+        return f'{type(self).__name__}: {self.name}'
 
 
     def __dir__(self):
@@ -119,9 +119,9 @@ class Node(metaclass=NodeMeta):
         items = ((k,getattr(self, k)) for k in self._nb_attrs)
         me = {k:v for (k,v) in items if v is not None}
 
-        arg_strings = ('{}={}'.format(k,v) for (k,v) in sorted(me.items(),
+        arg_strings = (f'{k}={v}' for (k,v) in sorted(me.items(),
             key=lambda x:x[0]))
-        return '{}({})'.format(type(self).__name__, ','.join(arg_strings))
+        return f"{type(self).__name__}({','.join(arg_strings)})"
 
     def _serialize(self, recurse=True):
         #sg = attrgetter(*self._nb_attrs)
@@ -153,8 +153,7 @@ class Node(metaclass=NodeMeta):
                     parent_node = objs[parent_uuid]
                 except KeyError as e:
                     raise KeyError(
-                        "Can't find parent for node: {} (parent={})".format(node,
-                            parent_uuid))
+                        f"Can't find parent for node: {node} (parent={parent_uuid})")
                 parent_node[node.name] = node
                 node.parent = parent_node
 
@@ -165,8 +164,9 @@ class Node(metaclass=NodeMeta):
 
                     root.parent = None
                 else:
-                    raise ValueError("multiple nodes found which don't have a parent - should only be a single root node! This for Node: {}".format(node))
-            #print('Now on node: {}, parent: {}'.format(node, node.parent))
+                    raise ValueError(f"multiple nodes found which don't have a \
+                        parent - should only be a single root node! This for \
+                        Node: {node}")
         if root is None:
             raise KeyError("Could not find the root node!")
         return root

@@ -12,7 +12,7 @@ class BitField(Node):
 
     def __str__(self):
         return super().__str__() + ' width: {}, position: {}, reset: {:#x}, value: {}'.format(
-                self.width, self.position, self.reset, self.annotation)
+                *(getattr(self, i) for i in ('width', 'position', 'reset', 'value')))
 
     @property
     def value(self):
@@ -20,6 +20,8 @@ class BitField(Node):
 
     @value.setter
     def value(self, new_value):
+        if hasattr(new_value, 'value'): #if it's an enumeration object
+            new_value = new_value.value
         self._value = new_value & ((1<<self.width)-1)
 
     @property

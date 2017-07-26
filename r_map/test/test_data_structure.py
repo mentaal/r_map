@@ -7,7 +7,7 @@ def test_get_item(data):
 
     #attribute based
     cfg0 = spi.cfg0
-    print('cfg: {}'.format(cfg0))
+    print(f'cfg: {cfg0}')
     field = spi.cfg0['bf0']
     field = spi.cfg0.bf0
     #field = spi.bf0
@@ -15,11 +15,10 @@ def test_get_item(data):
     print("Updating field value to spi_enabled")
     field.value = field.spi_enabled.value
     print(field)
-    print(spi.cfg0.bf1)
+    print(spi.cfg0.bf0)
     assert field.annotation == field.spi_enabled.name
 
-    print('bf0 annotation: {}'.format(field.annotation))
-    print('bf1 annotation: {}'.format(spi.cfg0.bf1.annotation))
+    print(f'bf0 annotation: {field.annotation}')
 
 def test_list_node(data):
     "display the node's public attributes and the names of its children"
@@ -61,7 +60,7 @@ def test_bit_reg_linkage(data):
     r = next(rs)
     print("Register: ", r)
 
-    print("Register access: {}".format(r.access))
+    print(f"Register access: {r.access}")
 
     v = 0x12345678
     r.value = v

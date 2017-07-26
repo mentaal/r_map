@@ -3,9 +3,9 @@ from math import ceil
 from functools import reduce
 from operator import ior
 class Register(AddressedNode):
-    _nb_attrs = ('width', 'reset')
-    def __init__(self, width=32, reset=0, **kwargs):
-        super().__init__(width=width, reset=reset, **kwargs)
+    _nb_attrs = ('width',)
+    def __init__(self, width=32, **kwargs):
+        super().__init__(width=width, **kwargs)
 
     @property
     def access(self):
@@ -20,8 +20,11 @@ class Register(AddressedNode):
         for f in self:
             f.value = x >> f.position
 
+    @property
+    def reset(self):
+        return reduce(ior, (f.reset<<f.position for f in self))
+
 
     def __str__(self):
-        return super().__str__() + ' value: {:#0{width}x}'.format(self.value,
-                width=ceil(self.width/4))
+        return super().__str__() + f' value: f{self.value:#0{ceil(self.width/4)}x}'
 

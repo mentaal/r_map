@@ -13,7 +13,7 @@ def test_bitfield(data):
     for f in reg:
         n = randint(0, 0xFFFFFFFF)
 
-        f.value = n 
+        f.value = n
 
         #field_contribution = (((1<<f.width)-1)<<f.position) & n
         field_contribution = (n & ((1<<f.width)-1)) << f.position
