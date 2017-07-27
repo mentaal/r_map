@@ -22,6 +22,8 @@ class BitField(Node):
     def value(self, new_value):
         if hasattr(new_value, 'value'): #if it's an enumeration object
             new_value = new_value.value
+        elif type(new_value) == str:
+            new_value = getattr(self, new_value).value
         self._value = new_value & ((1<<self.width)-1)
 
     @property

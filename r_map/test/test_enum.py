@@ -12,4 +12,10 @@ def test_enum(data):
 
     assert field.annotation == 'spi_enabled'
 
+    #try using string directly
+
+    field.value = 'spi_disabled'
+
+    assert field.annotation == 'spi_disabled'
+
 
