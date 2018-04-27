@@ -5,17 +5,6 @@ from operator import attrgetter
 import logging
 logger = logging.getLogger(__name__)
 
-class Registry():
-    """Registry used to hold mappings of register map elements to class
-    implementations"""
-    registry = {}
-
-    def __get__(self, instance, owner):
-        return self.registry
-
-    def __set__(self, instance, value):
-        raise AttributeError("Cannot set attribute - read only")
-
 class NodeMeta(type):
     '''used to magically update the nb_attrs'''
     def __new__(mcs, name, bases, attrs):
@@ -23,51 +12,49 @@ class NodeMeta(type):
         for b in bases:
             if hasattr(b, '_nb_attrs'):
                 _nb_attrs += b._nb_attrs
-            if hasattr(b, '_class_registry'):
-                if '_class_registry' not in attrs:
-                    attrs['_class_registry'] = b.__dict__['_class_registry']
         attrs['_nb_attrs'] = _nb_attrs
-        if '_class_registry' not in attrs:
-            #make a read-only data descriptor to prevent user from clobbering
-            #registry
-            attrs['_class_registry'] = Registry()
-        r = attrs['_class_registry'].registry
 
         new_class = super().__new__(mcs, name, bases, attrs)
-        if name not in r and name == 'Node':
-            #only automatically register the base class
-            r[name] = new_class
         return new_class
 
 class Node(metaclass=NodeMeta):
     '''A node in the tree data structure representing the register map'''
     #these names are not to be looked for in children
     #when pickling, only be concerned with these
-    _nb_attrs = ('name', 'descr', 'doc')
+    _nb_attrs = ('name', 'descr', 'doc', 'uuid')
 
-
-
-    def __init__(self, **kwargs):
+    def __init__(self, *, parent=None, **kwargs):
         '''
         Args:
             name(str)   : A the name of the Node
             parent(Node): Either a Node or None
             descr(str)  : A description for the node (usually shorter than doc)
             doc(str)    : A documentation string for the node
+            uuid(str)   : A Universal Identifier
         '''
-        for key in self._nb_attrs+('parent',):
+        for key in self._nb_attrs:
             setattr(self, key, kwargs.get(key, None))
+
+        self.parent = parent
         #automatically install it in the parent
-        if self.parent and isinstance(self.parent, Node):
+        if parent and isinstance(parent, Node):
             self.parent[self.name] = self
         self._children = OD()
         self.__doc__ = next((i for i in (self.descr, self.doc) if i), 'No description')
         self.uuid = kwargs.get('uuid', uuid4().hex)
 
+        unexpecteds = kwargs.keys() - set(self._nb_attrs)
+        if unexpecteds:
+            raise ValueError("Got unexpected keyword arguments: {}".format('\n'.join(unexpecteds)))
 
     def __str__(self):
         return f'{type(self).__name__}: {self.name}'
 
+    def __contains__(self, item):
+        if isinstance(item, str):
+            return item in self._children
+        else:
+            return item in self._children.values()
 
     def __dir__(self):
         local_files = {f for f in vars(self) if f[0] != '_'}
@@ -77,11 +64,11 @@ class Node(metaclass=NodeMeta):
 
     def __getattr__(self, name):
         if name in self._nb_attrs or name[:2] == '__':
-            raise AttributeError(name)
+            raise AttributeError(f"{self} doesn't contain: {name}")
         try:
             return self._children[name]
         except (KeyError, AttributeError) as e:
-            raise AttributeError(name)
+            raise AttributeError(f"{self} doesn't contain: {name} in its children")
 
     def __getitem__(self, item):
         return self._children[item]
@@ -123,73 +110,16 @@ class Node(metaclass=NodeMeta):
             key=lambda x:x[0]))
         return f"{type(self).__name__}({','.join(arg_strings)})"
 
-    def _serialize(self, recurse=True):
-        #sg = attrgetter(*self._nb_attrs)
-        items = ((k,getattr(self, k)) for k in self._nb_attrs)
-        me = {k:v for (k,v) in items if v is not None}
-        me['class_type'] = type(self).__name__
-        #change the parent from being an object reference to a uuid reference
-        if self.parent:
-            me['parent'] = self.parent.uuid
-        if recurse:
-            for node in self:
-                yield from node._serialize()
-        yield self.uuid, me
+    def _copy(self, *, parent=None, **kwargs):
+        """A create a deep copy of this object"""
+        existing_items = {k:getattr(self, k) for k in self._nb_attrs}
+        existing_items.update(kwargs)
+        existing_items['parent'] = parent
+        new_obj = type(self)(**existing_items)
+        for obj in self:
+            obj._copy(parent=new_obj)
+        return new_obj
 
-    @classmethod
-    def _deserialize(cls, d):
-        objs = {}
-        for uuid, node in d.items():
-            node_copy = node.copy()
-            _class = cls._class_registry[node_copy.pop('class_type')]
-            objs[uuid] = _class(uuid=uuid, **node_copy)
-
-        root = None
-        #now walk through all the items again and setup node references
-        for uuid, node in objs.items():
-            parent_uuid = node.parent
-            if parent_uuid != None:
-                try:
-                    parent_node = objs[parent_uuid]
-                except KeyError as e:
-                    raise KeyError(
-                        f"Can't find parent for node: {node} (parent={parent_uuid})")
-                parent_node[node.name] = node
-                node.parent = parent_node
-
-            else: #this node is the root
-                if root is None:
-                    root = node
-                    logger.debug("Setting root to: %s", node)
-
-                    root.parent = None
-                else:
-                    raise ValueError(f"multiple nodes found which don't have a \
-                        parent - should only be a single root node! This for \
-                        Node: {node}")
-        if root is None:
-            raise KeyError("Could not find the root node!")
-        return root
-
-    @classmethod
-    def _register(cls, name=None):
-        '''Register derived class with base class. Name is optional and if
-        omitted, defaults to the derived class' name'''
-        if name is None:
-            name = cls.__name__
-        logger.debug("Registering: %s under name: %s", cls, name)
-        cls._class_registry[name] = cls
-
-
-    @classmethod
-    def _register_default_classes(cls):
-        print("Registering default classes...")
-        import importlib
-        class_names = ('Register', 'RegisterMap', 'BitField', 'Enumeration')
-        for c_str in class_names:
-            module = importlib.import_module('.'+c_str, 'r_map')
-            c = getattr(module, c_str)
-            c._register()
 
 
 

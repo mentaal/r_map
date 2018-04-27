@@ -4,7 +4,7 @@ from functools import reduce
 from operator import ior
 class Register(AddressedNode):
     _nb_attrs = ('width',)
-    def __init__(self, width=32, **kwargs):
+    def __init__(self, *, width=32, **kwargs):
         super().__init__(width=width, **kwargs)
 
     @property
@@ -13,18 +13,17 @@ class Register(AddressedNode):
 
     @property
     def value(self):
-        return reduce(ior, (f.value<<f.position for f in self))
+        return reduce(ior, (f.value for f in self))
 
     @value.setter
     def value(self, x):
         for f in self:
-            f.value = x >> f.position
+            f.value = x
 
     @property
     def reset(self):
-        return reduce(ior, (f.reset<<f.position for f in self))
-
+        return reduce(ior, (f.reset for f in self))
 
     def __str__(self):
-        return super().__str__() + f' value: f{self.value:#0{ceil(self.width/4)}x}'
+        return super().__str__() + f' value: {self.value:#0{ceil(self.width/4)+2}x}'
 
