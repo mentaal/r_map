@@ -19,8 +19,9 @@ class BitFieldRef(Node):
         return next(iter(self._children.values()))
 
     @bf.setter
-    def bf(self, value):
-        self._children[value.name] = value
+    def bf(self, bitfield):
+        self._children[bitfield.name] = bitfield
+        bitfield.references.add(self)
 
 
     @property

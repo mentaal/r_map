@@ -21,18 +21,18 @@ Purpose
 6. Provide means to register which elements are accessed in data base and create
    a subtree from this data
 
-Nice to haves
--------------
+Features
+--------
 
-block.reg.write(bf=10) #a register write only setting bf to 10
-It would be trivial to tack on a writer function/object to handle register
-writes. Best left out this implementation r_map is intended to be sim
+Key and attribute access to an elements sub elements. The key access is
+particularly useful for cases where a sub element happens to have the name of a
+reserved keyword in Python.
 
-block.reg.bf=10        # a read mod write setting the bf to 10
-problem with this is ambiguity. What if a sub field's name clashed with a node's
-method or attributes?
-Answer to this:
-Most methods are prepended with a '_'
+Example ::
+
+    r_map1.reg.value = 10
+    r_map1['reg'].value = 10
+
 
 
 Notes

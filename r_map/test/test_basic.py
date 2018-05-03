@@ -7,10 +7,10 @@ def test_get_data(basic_data):
     bf.value = 0x12345
 
     bf_value = bf.value
-    for ref in bf:
+    for ref in bf.references:
         ref_view = (bf_value >> ref.field_offset) & ref.slice_width
         ref_view <<= ref.reg_offset
-        assert ref.value == bf1_view
+        assert ref.value == ref_view
 
     for item in root._walk(top_down=True):
         print(item)

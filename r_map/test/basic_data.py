@@ -11,7 +11,8 @@ def get_basic_data():
 
     root = Node(name='root')
 
-    r_map1 = RegisterMap(name='r_map1', parent=root, local_address=0x10000000)
+    r_map1 = RegisterMap(name='r_map1', parent=root, local_address=0x10000000,
+            descr="An example register map containing registers")
     reg1 = Register(name='reg1', parent=r_map1, local_address=0x0)
     reg2 = Register(name='reg2', parent=r_map1, local_address=0x4)
     bf1_ref = BitFieldRef(name='bf1_ref', parent=reg1, slice_width=6,
