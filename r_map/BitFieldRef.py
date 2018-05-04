@@ -20,11 +20,12 @@ class BitFieldRef(Node):
 
     @bf.setter
     def bf(self, bitfield):
+        self._children.clear()
         self._children[bitfield.name] = bitfield
         bitfield.references.add(self)
 
-    def __setitem__(self, name, bitfield):
-        super().__setitem__(name, bitfield)
+    def _add(self, bitfield):
+        super()._add(bitfield)
         bitfield.references.add(self)
 
     @property

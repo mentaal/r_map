@@ -24,6 +24,12 @@ def get_basic_data():
                           field_offset=3, reg_offset=4)
     bf2_ref.bf = bf1_ref.bf
 
+    bf3_ref = BitFieldRef(name='bf3_ref', parent=reg2, slice_width=5,
+                          field_offset=2, reg_offset=5)
+    bf2 = BitField(name='bf2', parent=bf3_ref, width=20, reset=0x6789, access='R')
+    bf4_ref = BitFieldRef(name='bf4_ref', parent=reg2, slice_width=2,
+                          field_offset=0, reg_offset=0)
+    bf4_ref._add(bf2)
 
     return root
 

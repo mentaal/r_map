@@ -20,7 +20,6 @@ from .RMapFactory import RMapFactory
 class RMapJSONParseError(KeyError):
     pass
 
-
 class RMapJSON(json.JSONEncoder):
     already_encoded = set()
     def default(self, o):
@@ -62,11 +61,10 @@ def from_json(json_str, **kwargs):
                 raise RMapJSONParseError("Cannot find object with uuid: %s "
                                 "referenced from child %s with parent uuid: %s".format(
                                     ref_uuid, parent_uuid))
-            parent[ref_obj.name] = ref_obj
+            parent._add(ref_obj)
             ref_obj.parent = parent
 
     return root
-
 
 def get_decoder():
     """Create a closure to hold a dictionary of already decoded items"""
@@ -81,12 +79,12 @@ def get_decoder():
             if 'children' in dct:
                 for child in dct['children']:
                     if isinstance(child, dict):
-                        parent_uuid = obj.uuid
                         ref = child.get('__ref__')
                         if ref:
+                            parent_uuid = obj.uuid
                             todo[parent_uuid].append(ref)
                     else:
-                        obj[child.name] = child
+                        obj._add(child)
                         child.parent = obj
             return obj
         else:

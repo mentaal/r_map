@@ -36,6 +36,12 @@ Example ::
     r_map1.reg.value = 10
     r_map1['reg'].value = 10
 
+That elements are not intended to be added to a node via key based assignment
+like a dictionary. A method: `_add` is provided for that.
+
+Key based assignment is not intended to be supported because it can result in a
+sub element having an alias which would be confusing and is an unlikely usecase.
+
 Register to bitfield value mapping
 ----------------------------------
 
@@ -88,40 +94,31 @@ Let's look at the following pytest testcase:
 
 def test_encode_to_json(basic_data):
 
-    #first get a copy
-    new_data = basic_data._copy()
-    r_map1 = new_data.r_map1
-
-    #make a reference copy
-    r_map1['reg3'] = r_map1.reg2
-
-    for obj in new_data._walk(top_down=True, levels=-1):
+    for obj in basic_data._walk(top_down=True, levels=-1):
         print(obj)
 
-    json_data = to_json(new_data, indent=4)
+    json_data = to_json(basic_data, indent=4)
     print(json_data)
 
 ```
 
 The printed tree looks like this:
 
-    Node: root
     RegisterMap: r_map1 (0x10000000)
     Register: reg1 (0x10000000) value: 0x00000600
     BitFieldRef: bf1_ref
     BitField: bf1 width: 20, reset: 0x12345, value: 0x12345
     Enumeration: use_auto_inc value: 20
     Enumeration: use_auto_dec value: 10
-    Register: reg2 (0x10000004) value: 0x00000080
+    Register: reg2 (0x10000004) value: 0x000000c1
     BitFieldRef: bf2_ref
     BitField: bf1 width: 20, reset: 0x12345, value: 0x12345
     Enumeration: use_auto_inc value: 20
     Enumeration: use_auto_dec value: 10
-    Register: reg2 (0x10000004) value: 0x00000080
-    BitFieldRef: bf2_ref
-    BitField: bf1 width: 20, reset: 0x12345, value: 0x12345
-    Enumeration: use_auto_inc value: 20
-    Enumeration: use_auto_dec value: 10
+    BitFieldRef: bf3_ref
+    BitField: bf2 width: 20, reset: 0x06789, value: 0x06789
+    BitFieldRef: bf4_ref
+    BitField: bf2 width: 20, reset: 0x06789, value: 0x06789
 
 The printed JSON looks like this:
 
@@ -129,7 +126,7 @@ The printed JSON looks like this:
         "name": "root",
         "descr": null,
         "doc": null,
-        "uuid": "c94ccefb139246cc9b7551dce5475d53",
+        "uuid": "7ec48568cd7546408ee7d2f92d6caf53",
         "__type__": "Node",
         "children": [
             {
@@ -137,7 +134,7 @@ The printed JSON looks like this:
                 "name": "r_map1",
                 "descr": "An example register map containing registers",
                 "doc": null,
-                "uuid": "c2542b43075442a7b32086376f7601b8",
+                "uuid": "43ce035a1fbc43a19ff042e589a2c4af",
                 "__type__": "RegisterMap",
                 "children": [
                     {
@@ -146,7 +143,7 @@ The printed JSON looks like this:
                         "name": "reg1",
                         "descr": null,
                         "doc": null,
-                        "uuid": "3173a181fcd3406db8531c2d814a0e42",
+                        "uuid": "347078eff45545bb96cf52e59c7c5cb0",
                         "__type__": "Register",
                         "children": [
                             {
@@ -156,7 +153,7 @@ The printed JSON looks like this:
                                 "name": "bf1_ref",
                                 "descr": null,
                                 "doc": null,
-                                "uuid": "cc9aee9525c740908d5686e36acdab2f",
+                                "uuid": "126d3bf1d04e401cb9fb1e112bf5427b",
                                 "__type__": "BitFieldRef",
                                 "children": [
                                     {
@@ -166,7 +163,7 @@ The printed JSON looks like this:
                                         "name": "bf1",
                                         "descr": null,
                                         "doc": null,
-                                        "uuid": "884cc624b8c949af9c95f1b0a749c4de",
+                                        "uuid": "9f7ce7c80d5a43158c950982d1c353e0",
                                         "__type__": "BitField",
                                         "children": [
                                             {
@@ -174,7 +171,7 @@ The printed JSON looks like this:
                                                 "name": "use_auto_inc",
                                                 "descr": null,
                                                 "doc": null,
-                                                "uuid": "d4042bec7cff443781d9281931bfa791",
+                                                "uuid": "0a9d2918b0ce4c87b6b885dad4f15531",
                                                 "__type__": "Enumeration"
                                             },
                                             {
@@ -182,7 +179,7 @@ The printed JSON looks like this:
                                                 "name": "use_auto_dec",
                                                 "descr": null,
                                                 "doc": null,
-                                                "uuid": "25b9f2e954d244b8a8ea09523f271afd",
+                                                "uuid": "9bda83dd1cd54ec2b5f8a96270737d8c",
                                                 "__type__": "Enumeration"
                                             }
                                         ]
@@ -197,7 +194,7 @@ The printed JSON looks like this:
                         "name": "reg2",
                         "descr": null,
                         "doc": null,
-                        "uuid": "50d9b82efb5e400c81d2cd22aa16af8a",
+                        "uuid": "68ae51b6f0954b2ba80f0354caaed2f6",
                         "__type__": "Register",
                         "children": [
                             {
@@ -207,43 +204,52 @@ The printed JSON looks like this:
                                 "name": "bf2_ref",
                                 "descr": null,
                                 "doc": null,
-                                "uuid": "cd572013939f427da02d4003fd3a2ffd",
+                                "uuid": "ce51098f341549e68de3eb434a78a68d",
+                                "__type__": "BitFieldRef",
+                                "children": [
+                                    {
+                                        "__ref__": "9f7ce7c80d5a43158c950982d1c353e0"
+                                    }
+                                ]
+                            },
+                            {
+                                "slice_width": 5,
+                                "reg_offset": 5,
+                                "field_offset": 2,
+                                "name": "bf3_ref",
+                                "descr": null,
+                                "doc": null,
+                                "uuid": "f20b1f8acc924e478ba99cddcd5abd41",
                                 "__type__": "BitFieldRef",
                                 "children": [
                                     {
                                         "width": 20,
-                                        "reset": 74565,
-                                        "access": "RW",
-                                        "name": "bf1",
+                                        "reset": 26505,
+                                        "access": "R",
+                                        "name": "bf2",
                                         "descr": null,
                                         "doc": null,
-                                        "uuid": "884cc624b8c949af9c95f1b0a749c4de",
-                                        "__type__": "BitField",
-                                        "children": [
-                                            {
-                                                "value": 20,
-                                                "name": "use_auto_inc",
-                                                "descr": null,
-                                                "doc": null,
-                                                "uuid": "d4042bec7cff443781d9281931bfa791",
-                                                "__type__": "Enumeration"
-                                            },
-                                            {
-                                                "value": 10,
-                                                "name": "use_auto_dec",
-                                                "descr": null,
-                                                "doc": null,
-                                                "uuid": "25b9f2e954d244b8a8ea09523f271afd",
-                                                "__type__": "Enumeration"
-                                            }
-                                        ]
+                                        "uuid": "44687f38b2c5439e967224af9370663c",
+                                        "__type__": "BitField"
+                                    }
+                                ]
+                            },
+                            {
+                                "slice_width": 2,
+                                "reg_offset": 0,
+                                "field_offset": 0,
+                                "name": "bf4_ref",
+                                "descr": null,
+                                "doc": null,
+                                "uuid": "f386cc40a898456a8d0ce38eb02c5ed3",
+                                "__type__": "BitFieldRef",
+                                "children": [
+                                    {
+                                        "__ref__": "44687f38b2c5439e967224af9370663c"
                                     }
                                 ]
                             }
                         ]
-                    },
-                    {
-                        "__ref__": "50d9b82efb5e400c81d2cd22aa16af8a"
                     }
                 ]
             }

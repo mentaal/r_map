@@ -15,7 +15,7 @@ class BitField(Node):
             1. A bitfield is initialized, the base class adds it into the parent
                class's _children dictionary.
             2. When a BitField is added to a BitFieldRef's _children dictionary
-               __setitem__ is overriden in BitFieldRef to also add the
+               `_add` is overriden in BitFieldRef to also add the
                BitFieldRef instance to the BitField's set of references.
 
             When initialization occurs, 1 above calls 2 which requires that the
@@ -62,10 +62,4 @@ class BitField(Node):
     @property
     def annotation(self):
         return next((a.name for a in self if a.value == self.value), hex(self.value))
-
-
-    #TODO: add __eq__ and __req__ to check for equality against an enumeration
-    #string or a value
-    #Should I? does this make sense to do? Maybe it would make more sense to
-    #check if the bitfield's other fiels are matching....
 

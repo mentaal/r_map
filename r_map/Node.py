@@ -38,7 +38,7 @@ class Node(metaclass=NodeMeta):
         self.parent = parent
         #automatically install it in the parent
         if parent and isinstance(parent, Node):
-            self.parent[self.name] = self
+            self.parent._add(self)
         self._children = OD()
         self.__doc__ = next((i for i in (self.descr, self.doc) if i), 'No description')
         self.uuid = kwargs.get('uuid', uuid4().hex)
@@ -77,8 +77,8 @@ class Node(metaclass=NodeMeta):
     def __getitem__(self, item):
         return self._children[item]
 
-    def __setitem__(self, name, item):
-        self._children[name] = item
+    def _add(self, item):
+        self._children[item.name] = item
 
     def __iter__(self):
         return (child for child in self._children.values())
@@ -117,6 +117,8 @@ class Node(metaclass=NodeMeta):
     def _copy(self, *, parent=None, **kwargs):
         """A create a deep copy of this object"""
         existing_items = {k:getattr(self, k) for k in self._nb_attrs}
+        #It's a copy so shouldn't have the same uuid
+        existing_items.pop('uuid', None)
         existing_items.update(kwargs)
         existing_items['parent'] = parent
         new_obj = type(self)(**existing_items)

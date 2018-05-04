@@ -1,17 +1,10 @@
 from r_map.RMapJSON import to_json, from_json
 def test_encode_to_json(basic_data):
 
-    #first get a copy
-    new_data = basic_data._copy()
-    r_map1 = new_data.r_map1
-
-    #make a reference copy
-    r_map1['reg3'] = r_map1.reg2
-
-    for obj in new_data._walk(top_down=True, levels=-1):
+    for obj in basic_data._walk(top_down=True, levels=-1):
         print(obj)
 
-    json_data = to_json(new_data, indent=4)
+    json_data = to_json(basic_data, indent=4)
     print(json_data)
 
 
