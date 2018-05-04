@@ -8,9 +8,13 @@ def test_encode_to_json(basic_data):
     #make a reference copy
     r_map1['reg3'] = r_map1.reg2
 
-    json_data = to_json(new_data, indent=4)
+    for obj in new_data._walk(top_down=True, levels=-1):
+        print(obj)
 
+    json_data = to_json(new_data, indent=4)
     print(json_data)
+
+
 
 def test_decode_from_json(basic_data):
     json_data = to_json(basic_data)
