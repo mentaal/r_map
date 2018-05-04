@@ -9,7 +9,7 @@ def test_get_item(data):
     cfg0 = spi.cfg0
     print(f'cfg: {cfg0}')
     field = spi.cfg0['bf0']
-    field = spi.cfg0.bf0
+    field = spi.cfg0.bf0.bf
     #field = spi.bf0
     print(field)
     print("Updating field value to spi_enabled")
@@ -64,12 +64,12 @@ def test_bit_reg_linkage(data):
 
     v = 0x12345678
     r.value = v
-    for bf in r:
-        print("bitfield: ", bf)
-        field_expected_value = (r.value >> bf.position) & bf.field_mask
-        assert field_expected_value == bf.value
+    for ref in r:
+        print("bitfield: ", ref.bf)
+        field_expected_value = (r.value >> ref.reg_offset) & ref.bf.mask
+        assert field_expected_value == ref.bf.value
 
     new_value = 12345678
-    for bf in r:
-        bf.value = (new_value >> bf.position) & bf.field_mask
+    for ref in r:
+        ref.bf.value = (new_value >> ref.reg_offset) & ref.bf.mask
     assert r.value == new_value

@@ -1,5 +1,5 @@
 def test_enum(data):
-    field = data.spi.cfg0.bf0
+    field = data.spi.cfg0.bf0.bf
     print(field.annotation)
 
     field.value = field.spi_disabled

@@ -2,9 +2,11 @@ from random import randint
 def test_bitfield(data):
     reg = data.spi.cfg0
 
-    f = reg.bf0
+    f = reg.bf0.bf
 
     reg.value = 0xFFFFFFFF
+
+    print(f"Reg value now: {reg.value}")
 
     assert f.value == (1<<f.width)-1
 
@@ -15,9 +17,7 @@ def test_bitfield(data):
 
         f.value = n
 
-        #field_contribution = (((1<<f.width)-1)<<f.position) & n
-        field_contribution = (n & ((1<<f.width)-1)) << f.position
-        expected_reg_value |= field_contribution
+        expected_reg_value |= f.value
 
     assert expected_reg_value == reg.value
 

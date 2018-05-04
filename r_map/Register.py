@@ -9,7 +9,7 @@ class Register(AddressedNode):
 
     @property
     def access(self):
-        return '|'.join(sorted(set(o.access for o in self._children.values())))
+        return '|'.join(sorted(set(o.bf.access for o in self)))
 
     @property
     def value(self):

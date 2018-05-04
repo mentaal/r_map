@@ -1,6 +1,7 @@
 from r_map.Node import Node
 from r_map.Register import Register
 from r_map.BitField import BitField
+from r_map.BitFieldRef import BitFieldRef
 from r_map.RegisterMap import RegisterMap
 from r_map.Enumeration import Enumeration
 from random import randint, choice, choices
@@ -20,7 +21,6 @@ def get_names(amount, max_length=40):
 
 def get_data():
     #perform registration
-    Node._register_default_classes()
     root = Node(name='root')
     for map_incr, rmap_name in enumerate(get_names(amount = randint(20, 50))):
         block = RegisterMap(name=rmap_name, parent=root,
@@ -37,8 +37,10 @@ def get_data():
                 bf_width = randint(1, 33)
                 if avail_width < bf_width:
                     bf_width = avail_width
-                bf = BitField(name=bf_name, parent=reg, width=bf_width,
-                            position=current_position, access=get_access()[0])
+                bf_ref = BitFieldRef(name=bf_name, parent=reg,
+                        slice_width=bf_width, reg_offset=current_position)
+                bf = BitField(name=bf_name, parent=bf_ref, width=bf_width,
+                            access=get_access()[0])
                 for value, enum_name in enumerate(get_names(amount=randint(1,4))):
                             Enumeration(parent=bf, name=enum_name, value=value)
                 current_position += bf_width
@@ -49,14 +51,18 @@ def get_data():
     spi = RegisterMap(name='spi', parent=root, descr='A registermap defining the SPI block',
             local_address=0x40000000)
     cfgs = [Register(name=f'cfg{i}', parent=spi) for i in range(randint(10, 32))]
+
     def get_field(parent):
         remaining_width = 32
         current_position = 0
         field_index = 0
         while remaining_width:
             new_width = randint(1, remaining_width)
-            yield  BitField(name=f'bf{field_index}',
-                    position=current_position,parent=parent, width = new_width,
+            bf_name = f'bf{field_index}'
+            bf_ref = BitFieldRef(parent=parent,name=bf_name, slice_width=new_width,
+                        reg_offset=current_position)
+            yield  BitField(name=bf_name,
+                    parent=bf_ref, width = new_width,
                     reset=randint(0, (1<<new_width)-1))
             if randint(0,100) > 60:
                 break
@@ -64,8 +70,6 @@ def get_data():
             remaining_width -= new_width
             current_position += new_width
             field_index += 1
-
-
 
 
     for cfg in cfgs:

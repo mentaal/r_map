@@ -33,11 +33,12 @@ class BitFieldRef(Node):
 
     @value.setter
     def value(self, new_value):
-        new_bf_value = self.bf
-        new_bf_value &= ~(self.mask << self.field_offset)
+        bf = self.bf
+
+        old_bf_value = bf.value & ~(self.mask << self.field_offset)
         new_value = (new_value >> self.reg_offset) & self.mask
 
-        self.bf = new_bf_value | (new_value << self.field_offseet)
+        bf.value = old_bf_value | (new_value << self.field_offset)
 
 
 

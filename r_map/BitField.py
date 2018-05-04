@@ -1,13 +1,37 @@
 from math import ceil
 from .Node import Node
+import r_map.Enumeration #get around circular dependancy
 class BitField(Node):
     _nb_attrs = ('width', 'reset', 'access')
     def __init__(self, *, parent=None, width=1, reset=0, access='XX', **kwargs):
-        self.references = set()
-        super().__init__(parent=parent, width=width, reset=reset, access=access, **kwargs)
-        self._value = self.reset
+        """Initialization function for BitField type.
+
+        .. warning ::
+
+            A variable: 'references' of type set is created before delegating
+            to the base class' initialization function. This is a bit of an ugly
+            hack to support references being automatically updated when:
+
+            1. A bitfield is initialized, the base class adds it into the parent
+               class's _children dictionary.
+            2. When a BitField is added to a BitFieldRef's _children dictionary
+               __setitem__ is overriden in BitFieldRef to also add the
+               BitFieldRef instance to the BitField's set of references.
+
+            When initialization occurs, 1 above calls 2 which requires that the
+            references set already exist. Without it, infinite recursion will
+            result.
+        """
         if width < 1:
             raise ValueError("Width needs to be >= 1")
+        mask = (1 << width) - 1
+        reset &= mask
+
+        self.references = set()
+        super().__init__(parent=parent, width=width, reset=reset, access=access, **kwargs)
+
+        self.mask = mask
+        self._value = self.reset
 
     def __str__(self):
         return super().__str__() + ' width: {}, reset: {:#0{width}x}, value: {:#0{width}x}'.format(
@@ -15,12 +39,6 @@ class BitField(Node):
                 self.reset,
                 self.value,
                 width=ceil(self.width/4+2)) #+2 to account for the "0x"
-
-    def __getattr__(self, name):
-        """Redefine this function to prevent infinite recursion. Recursion would
-        otherwise result because this function would delegate to a BitFieldRef
-        which is higher in the Register Map tree structure"""
-        raise AttributeError(f"{self} doesn't contain: {name}")
 
     @property
     def value(self):
@@ -34,8 +52,12 @@ class BitField(Node):
                     self._value = enumeration.value
                     return
             raise ValueError(f"{x} doesn't match any enumeration pertaining to bitfield: {self.name}")
+        elif isinstance(x, r_map.Enumeration.Enumeration):
+            self._value = x.value
+        elif isinstance(x, int):
+            self._value = x & self.mask
         else:
-            self._value = x & self.width
+            raise NotImplementedError("Enumerations only support ints and Enumerations")
 
     @property
     def annotation(self):

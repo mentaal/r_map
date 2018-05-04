@@ -64,11 +64,15 @@ class Node(metaclass=NodeMeta):
 
     def __getattr__(self, name):
         if name in self._nb_attrs or name[:2] == '__':
-            raise AttributeError(f"{self} doesn't contain: {name}")
+            #print("raising exception in __getattr__ with name: {}".format(name))
+            #if name == 'name':
+            #    import pdb
+            #    pdb.set_trace()
+            raise AttributeError(f"{name} not found")
         try:
             return self._children[name]
         except (KeyError, AttributeError) as e:
-            raise AttributeError(f"{self} doesn't contain: {name} in its children")
+            raise AttributeError(f"{name} not found")
 
     def __getitem__(self, item):
         return self._children[item]
