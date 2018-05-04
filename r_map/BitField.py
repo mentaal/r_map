@@ -3,12 +3,9 @@ from .Node import Node
 class BitField(Node):
     _nb_attrs = ('width', 'reset', 'access')
     def __init__(self, *, parent=None, width=1, reset=0, access='XX', **kwargs):
+        self.references = set()
         super().__init__(parent=parent, width=width, reset=reset, access=access, **kwargs)
         self._value = self.reset
-        if parent:
-            self.references = {parent}
-        else:
-            self.references = set()
         if width < 1:
             raise ValueError("Width needs to be >= 1")
 
@@ -18,6 +15,12 @@ class BitField(Node):
                 self.reset,
                 self.value,
                 width=ceil(self.width/4+2)) #+2 to account for the "0x"
+
+    def __getattr__(self, name):
+        """Redefine this function to prevent infinite recursion. Recursion would
+        otherwise result because this function would delegate to a BitFieldRef
+        which is higher in the Register Map tree structure"""
+        raise AttributeError(f"{self} doesn't contain: {name}")
 
     @property
     def value(self):

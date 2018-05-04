@@ -23,6 +23,9 @@ class BitFieldRef(Node):
         self._children[bitfield.name] = bitfield
         bitfield.references.add(self)
 
+    def __setitem__(self, name, bitfield):
+        super().__setitem__(name, bitfield)
+        bitfield.references.add(self)
 
     @property
     def value(self):

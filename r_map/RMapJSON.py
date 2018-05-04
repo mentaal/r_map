@@ -30,9 +30,11 @@ class RMapJSON(json.JSONEncoder):
             dct = {n:getattr(o,n) for n in o._nb_attrs}
             dct['__type__'] = type(o).__name__
             if o._children:
-                dct['_children'] = o._children
+                dct['children'] = list(o._children.values())
             self.already_encoded.add(o)
             return dct
+        elif isinstance(o, set):
+            return list(o)
         else:
             return json.JSONEncoder.default(self, o)
 
@@ -46,21 +48,21 @@ def from_json(json_str, **kwargs):
     root = json.loads(json_str, object_hook=decoder, **kwargs)
 
     #now finish up the decoding process
-    for parent_uuid, child_dict in todo.items():
+    for parent_uuid, ref_list in todo.items():
         try:
             parent = decoded[parent_uuid]
         except KeyError as e:
             raise RMapJSONParseError("Cannot find object with uuid: %s "
                                      "which is referenced by another node".format(
                                          parent_uuid)) from e
-        for child_name, ref_uuid in child_dict.items():
+        for ref_uuid in ref_list:
             try:
                 ref_obj = decoded[ref_uuid]
             except KeyError as e:
                 raise RMapJSONParseError("Cannot find object with uuid: %s "
                                 "referenced from child %s with parent uuid: %s".format(
-                                    ref_uuid, child_name, parent_uuid))
-            parent[child_name] = ref_obj
+                                    ref_uuid, parent_uuid))
+            parent[ref_obj.name] = ref_obj
             ref_obj.parent = parent
 
     return root
@@ -69,23 +71,23 @@ def from_json(json_str, **kwargs):
 def get_decoder():
     """Create a closure to hold a dictionary of already decoded items"""
     decoded = {}
-    todo = defaultdict(dict)
+    todo = defaultdict(list)
     def decoder(dct):
         if '__type__' in dct:
             #print("In decoder, dct: ", dct)
             obj_type = getattr(RMapFactory, dct.pop('__type__'))
             obj = obj_type(**{k:dct.get(k) for k in obj_type._nb_attrs})
             decoded[obj.uuid] = obj
-            if '_children' in dct:
-                for child_name, child_value in dct['_children'].items():
-                    if isinstance(child_value, dict):
+            if 'children' in dct:
+                for child in dct['children']:
+                    if isinstance(child, dict):
                         parent_uuid = obj.uuid
-                        ref = child_value.get('__ref__')
+                        ref = child.get('__ref__')
                         if ref:
-                            todo[parent_uuid][child_name] = ref
+                            todo[parent_uuid].append(ref)
                     else:
-                        obj[child_name] = child_value
-                        child_value.parent = obj
+                        obj[child.name] = child
+                        child.parent = obj
             return obj
         else:
             return dct
