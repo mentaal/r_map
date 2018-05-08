@@ -88,7 +88,41 @@ JSON
 Support is provided to serialize the data structure to and from JSON using a
 custom decoder and encoder.
 
-Let's look at the following pytest testcase:
+Let's create some data:
+
+```python
+
+def get_basic_data():
+
+    root = Node(name='root')
+
+    r_map1 = RegisterMap(name='r_map1', parent=root, local_address=0x10000000,
+            descr="An example register map containing registers")
+    reg1 = Register(name='reg1', parent=r_map1, local_address=0x0)
+    bf1_ref = BitFieldRef(name='bf1_ref', parent=reg1, slice_width=6,
+                          field_offset=7, reg_offset=8)
+    bf1 = BitField(name='bf1', parent=bf1_ref, width=20, reset=0x12345,
+            access='RW', doc="Some documentation to describe the bitfield")
+    enum1 = Enumeration(name='use_auto_inc', value=20, parent=bf1)
+    enum2 = Enumeration(name='use_auto_dec', value=10, parent=bf1)
+
+    reg2 = Register(name='reg2', parent=r_map1, local_address=0x4)
+    bf2_ref = BitFieldRef(name='bf2_ref', parent=reg2, slice_width=4,
+                          field_offset=3, reg_offset=4)
+    bf2_ref.bf = bf1
+
+    bf3_ref = BitFieldRef(name='bf3_ref', parent=reg2, slice_width=5,
+                          field_offset=2, reg_offset=5)
+    bf2 = BitField(name='bf2', parent=bf3_ref, width=20, reset=0x6789, access='R')
+    bf4_ref = BitFieldRef(name='bf4_ref', parent=reg2, slice_width=2,
+                          field_offset=0, reg_offset=0)
+    bf4_ref._add(bf2)
+
+    return root
+
+```
+
+And look at the following pytest testcase:
 
 ```python
 
@@ -122,139 +156,142 @@ The printed tree looks like this:
 
 The printed JSON looks like this:
 
-    {
-        "name": "root",
-        "descr": null,
-        "doc": null,
-        "uuid": "7ec48568cd7546408ee7d2f92d6caf53",
-        "__type__": "Node",
-        "children": [
-            {
-                "local_address": 268435456,
-                "name": "r_map1",
-                "descr": "An example register map containing registers",
-                "doc": null,
-                "uuid": "43ce035a1fbc43a19ff042e589a2c4af",
-                "__type__": "RegisterMap",
-                "children": [
-                    {
-                        "width": 32,
-                        "local_address": 0,
-                        "name": "reg1",
-                        "descr": null,
-                        "doc": null,
-                        "uuid": "347078eff45545bb96cf52e59c7c5cb0",
-                        "__type__": "Register",
-                        "children": [
-                            {
-                                "slice_width": 6,
-                                "reg_offset": 8,
-                                "field_offset": 7,
-                                "name": "bf1_ref",
-                                "descr": null,
-                                "doc": null,
-                                "uuid": "126d3bf1d04e401cb9fb1e112bf5427b",
-                                "__type__": "BitFieldRef",
-                                "children": [
-                                    {
-                                        "width": 20,
-                                        "reset": 74565,
-                                        "access": "RW",
-                                        "name": "bf1",
-                                        "descr": null,
-                                        "doc": null,
-                                        "uuid": "9f7ce7c80d5a43158c950982d1c353e0",
-                                        "__type__": "BitField",
-                                        "children": [
-                                            {
-                                                "value": 20,
-                                                "name": "use_auto_inc",
-                                                "descr": null,
-                                                "doc": null,
-                                                "uuid": "0a9d2918b0ce4c87b6b885dad4f15531",
-                                                "__type__": "Enumeration"
-                                            },
-                                            {
-                                                "value": 10,
-                                                "name": "use_auto_dec",
-                                                "descr": null,
-                                                "doc": null,
-                                                "uuid": "9bda83dd1cd54ec2b5f8a96270737d8c",
-                                                "__type__": "Enumeration"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    },
-                    {
-                        "width": 32,
-                        "local_address": 4,
-                        "name": "reg2",
-                        "descr": null,
-                        "doc": null,
-                        "uuid": "68ae51b6f0954b2ba80f0354caaed2f6",
-                        "__type__": "Register",
-                        "children": [
-                            {
-                                "slice_width": 4,
-                                "reg_offset": 4,
-                                "field_offset": 3,
-                                "name": "bf2_ref",
-                                "descr": null,
-                                "doc": null,
-                                "uuid": "ce51098f341549e68de3eb434a78a68d",
-                                "__type__": "BitFieldRef",
-                                "children": [
-                                    {
-                                        "__ref__": "9f7ce7c80d5a43158c950982d1c353e0"
-                                    }
-                                ]
-                            },
-                            {
-                                "slice_width": 5,
-                                "reg_offset": 5,
-                                "field_offset": 2,
-                                "name": "bf3_ref",
-                                "descr": null,
-                                "doc": null,
-                                "uuid": "f20b1f8acc924e478ba99cddcd5abd41",
-                                "__type__": "BitFieldRef",
-                                "children": [
-                                    {
-                                        "width": 20,
-                                        "reset": 26505,
-                                        "access": "R",
-                                        "name": "bf2",
-                                        "descr": null,
-                                        "doc": null,
-                                        "uuid": "44687f38b2c5439e967224af9370663c",
-                                        "__type__": "BitField"
-                                    }
-                                ]
-                            },
-                            {
-                                "slice_width": 2,
-                                "reg_offset": 0,
-                                "field_offset": 0,
-                                "name": "bf4_ref",
-                                "descr": null,
-                                "doc": null,
-                                "uuid": "f386cc40a898456a8d0ce38eb02c5ed3",
-                                "__type__": "BitFieldRef",
-                                "children": [
-                                    {
-                                        "__ref__": "44687f38b2c5439e967224af9370663c"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }
+```json
+
+{
+    "name": "root",
+    "descr": null,
+    "doc": null,
+    "uuid": "2c0978ce1e614ea49c5ce9254f74d37a",
+    "__type__": "Node",
+    "children": [
+        {
+            "local_address": 268435456,
+            "name": "r_map1",
+            "descr": "An example register map containing registers",
+            "doc": null,
+            "uuid": "4f85ef8788dc4aec85eed44356329831",
+            "__type__": "RegisterMap",
+            "children": [
+                {
+                    "width": 32,
+                    "local_address": 0,
+                    "name": "reg1",
+                    "descr": null,
+                    "doc": null,
+                    "uuid": "f17d456abeaa413983dbbf00e293e8f9",
+                    "__type__": "Register",
+                    "children": [
+                        {
+                            "slice_width": 6,
+                            "reg_offset": 8,
+                            "field_offset": 7,
+                            "name": "bf1_ref",
+                            "descr": null,
+                            "doc": null,
+                            "uuid": "7ea672aae3864045ae61a23497a41751",
+                            "__type__": "BitFieldRef",
+                            "children": [
+                                {
+                                    "width": 20,
+                                    "reset": 74565,
+                                    "access": "RW",
+                                    "name": "bf1",
+                                    "descr": null,
+                                    "doc": "Some documentation to describe the bitfield",
+                                    "uuid": "dadab6e82d5e4b6fafc69802791f4c9e",
+                                    "__type__": "BitField",
+                                    "children": [
+                                        {
+                                            "value": 20,
+                                            "name": "use_auto_inc",
+                                            "descr": null,
+                                            "doc": null,
+                                            "uuid": "d17aa40adbf3449c9fd965a7fe8cbc80",
+                                            "__type__": "Enumeration"
+                                        },
+                                        {
+                                            "value": 10,
+                                            "name": "use_auto_dec",
+                                            "descr": null,
+                                            "doc": null,
+                                            "uuid": "7c9d22efe9e246fdae55caa0a73cbaa1",
+                                            "__type__": "Enumeration"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    "width": 32,
+                    "local_address": 4,
+                    "name": "reg2",
+                    "descr": null,
+                    "doc": null,
+                    "uuid": "61c89c4a8e714223a18678309e749e41",
+                    "__type__": "Register",
+                    "children": [
+                        {
+                            "slice_width": 4,
+                            "reg_offset": 4,
+                            "field_offset": 3,
+                            "name": "bf2_ref",
+                            "descr": null,
+                            "doc": null,
+                            "uuid": "f298ec5da3d04e62b8bda3d874625617",
+                            "__type__": "BitFieldRef",
+                            "children": [
+                                {
+                                    "__ref__": "dadab6e82d5e4b6fafc69802791f4c9e"
+                                }
+                            ]
+                        },
+                        {
+                            "slice_width": 5,
+                            "reg_offset": 5,
+                            "field_offset": 2,
+                            "name": "bf3_ref",
+                            "descr": null,
+                            "doc": null,
+                            "uuid": "30cb3876b14743ea84770c39bafb3e64",
+                            "__type__": "BitFieldRef",
+                            "children": [
+                                {
+                                    "width": 20,
+                                    "reset": 26505,
+                                    "access": "R",
+                                    "name": "bf2",
+                                    "descr": null,
+                                    "doc": null,
+                                    "uuid": "c748c5715ab6410d9436c1e7fbfa7f33",
+                                    "__type__": "BitField"
+                                }
+                            ]
+                        },
+                        {
+                            "slice_width": 2,
+                            "reg_offset": 0,
+                            "field_offset": 0,
+                            "name": "bf4_ref",
+                            "descr": null,
+                            "doc": null,
+                            "uuid": "d699060c8e7549f8a1baec7778f15072",
+                            "__type__": "BitFieldRef",
+                            "children": [
+                                {
+                                    "__ref__": "c748c5715ab6410d9436c1e7fbfa7f33"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
+```
 
 The `__ref__` item in the JSON output indicates that it's a reference copy of
 another object with the supplied UUID.
