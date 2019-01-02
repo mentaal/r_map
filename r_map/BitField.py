@@ -2,13 +2,13 @@ from math import ceil
 from .Node import Node
 import r_map.Enumeration #get around circular dependancy
 class BitField(Node):
-    _nb_attrs = ('width', 'reset', 'access')
-    def __init__(self, *, parent=None, width=1, reset=0, access='XX', **kwargs):
+    _nb_attrs = frozenset(['width', 'reset_val', 'access'])
+    def __init__(self, *, parent=None, width=1, reset_val=0, access='XX', **kwargs):
         """Initialization function for BitField type.
 
         .. warning ::
 
-            A variable: 'references' of type set is created before delegating
+            A variable: '_references' of type set is created before delegating
             to the base class' initialization function. This is a bit of an ugly
             hack to support references being automatically updated when:
 
@@ -19,26 +19,34 @@ class BitField(Node):
                BitFieldRef instance to the BitField's set of references.
 
             When initialization occurs, 1 above calls 2 which requires that the
-            references set already exist. Without it, infinite recursion will
+            _references set already exist. Without it, infinite recursion will
             result.
         """
         if width < 1:
             raise ValueError("Width needs to be >= 1")
         mask = (1 << width) - 1
-        reset &= mask
+        reset_val &= mask
 
-        self.references = set()
-        super().__init__(parent=parent, width=width, reset=reset, access=access, **kwargs)
+        self._references = set()
+        super().__init__(parent=parent,
+                         width=width,
+                         reset_val=reset_val,
+                         access=access,
+                         **kwargs)
 
         self.mask = mask
-        self._value = self.reset
+        self._value = self.reset_val
 
     def __str__(self):
-        return super().__str__() + ' width: {}, reset: {:#0{width}x}, value: {:#0{width}x}'.format(
+        return super().__str__() + \
+            ' width: {}, reset_val: {:#0{width}x}, value: {:#0{width}x}'.format(
                 self.width,
-                self.reset,
+                self.reset_val,
                 self.value,
                 width=ceil(self.width/4+2)) #+2 to account for the "0x"
+
+    def reset(self):
+        self.value = self.reset_val
 
     @property
     def value(self):
@@ -50,9 +58,11 @@ class BitField(Node):
             for enumeration in self:
                 if enumeration.name == x:
                     self._value = enumeration.value
-                    return
-            raise ValueError(f"{x} doesn't match any enumeration pertaining to bitfield: {self.name}")
-        elif isinstance(x, r_map.Enumeration.Enumeration):
+                    break
+            else:
+                raise ValueError(f"{x} doesn't match any enumeration pertaining"
+                                 f" to bitfield: {self.name}")
+        elif isinstance(x, r_map.Enumeration):
             self._value = x.value
         elif isinstance(x, int):
             self._value = x & self.mask

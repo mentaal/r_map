@@ -1,11 +1,5 @@
-from r_map.RMapFactory import RMapFactory
+from r_map import BitField, Register, RegisterMap, Enumeration, BitFieldRef, Node
 
-Register = RMapFactory.Register
-BitField = RMapFactory.BitField
-BitFieldRef = RMapFactory.BitFieldRef
-Enumeration = RMapFactory.Enumeration
-RegisterMap = RMapFactory.RegisterMap
-Node = RMapFactory.Node
 
 def get_basic_data():
 

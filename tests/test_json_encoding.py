@@ -1,4 +1,5 @@
-from r_map.RMapJSON import to_json, from_json
+from r_map import to_json, from_json
+
 def test_encode_to_json(basic_data):
 
     for obj in basic_data._walk(top_down=True, levels=-1):

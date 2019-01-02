@@ -1,4 +1,9 @@
 import pytest
+import r_map
+
+def test_BitField_creation():
+    bf = r_map.Bitfield(name='bf1')
+
 
 def test_get_data(basic_data):
     root = basic_data

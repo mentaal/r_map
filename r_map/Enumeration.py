@@ -1,7 +1,7 @@
 from .Node import Node
-import r_map.BitField
+import r_map
 class Enumeration(Node):
-    _nb_attrs = ('value',)
+    _nb_attrs = frozenset(['value',])
 
     __hash__ = Node.__hash__
 
@@ -9,7 +9,7 @@ class Enumeration(Node):
         return super().__str__() + ' value: {}'.format(self.value)
 
     def __eq__(self, other):
-        if isinstance(other, (Enumeration,  r_map.BitField.BitField)):
+        if isinstance(other, (Enumeration,  r_map.BitField)):
             return self.value == other.value
         elif isinstance(other, int):
             return self.value == other
@@ -17,7 +17,7 @@ class Enumeration(Node):
             return NotImplemented
 
     def __lt__(self, other):
-        if isinstance(other, (Enumeration,  r_map.BitField.BitField)):
+        if isinstance(other, (Enumeration,  r_map.BitField)):
             return self.value < other.value
         elif isinstance(other, int):
             return self.value < other
@@ -25,7 +25,7 @@ class Enumeration(Node):
             return NotImplemented
 
     def __le__(self, other):
-        if isinstance(other, (Enumeration, r_map.BitField.BitField)):
+        if isinstance(other, (Enumeration, r_map.BitField)):
             return self.value <= other.value
         elif isinstance(other, int):
             return self.value <= other
@@ -33,7 +33,7 @@ class Enumeration(Node):
             return NotImplemented
 
     def __gt__(self, other):
-        if isinstance(other, (Enumeration, r_map.BitField.BitField)):
+        if isinstance(other, (Enumeration, r_map.BitField)):
             return self.value > other.value
         elif isinstance(other, int):
             return self.value > other
@@ -41,7 +41,7 @@ class Enumeration(Node):
             return NotImplemented
 
     def __ge__(self, other):
-        if isinstance(other, (Enumeration, r_map.BitField.BitField)):
+        if isinstance(other, (Enumeration, r_map.BitField)):
             return self.value >= other.value
         elif isinstance(other, int):
             return self.value >= other

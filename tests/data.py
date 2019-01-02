@@ -1,12 +1,7 @@
-from r_map.Node import Node
-from r_map.Register import Register
-from r_map.BitField import BitField
-from r_map.BitFieldRef import BitFieldRef
-from r_map.RegisterMap import RegisterMap
-from r_map.Enumeration import Enumeration
 from random import randint, choice, choices
 from string import ascii_letters, digits
 from functools import partial
+from r_map import BitField, Register, RegisterMap, Enumeration, BitFieldRef, Node
 
 get_access = partial(choices, ('RW', 'RW1C', 'W', 'R', 'XX'), (100, 10, 20, 20, 20))
 

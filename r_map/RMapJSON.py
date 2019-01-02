@@ -1,35 +1,39 @@
 """
 Module to provide functionality to serialize and deserialize r_map data to JSON.
 A custom encoder/decoder is implemented to facilitate this.
-
-TODO: provide support to handle copies or references in the JSON data.
-Idea is that a bitfield might be referenced by more than one BitFieldRef object.
-This should be represented in the JSON object's dictionary as __ref__:<uuid>
-where <uuid> is the uuid of the object being referenced.
-
-Additionally, the ability to provide a deep copy of an object (object tree)
-would be very useful and suitably reprented in the JSON dictionary as being
-__copy__:<uuid>, <key_override>:<data_override> where additional key-value pairs
-can be added to specialize the copy by overriding the values taken from the
-original.
 """
 import json
-from collections import defaultdict
-from .RMapFactory import RMapFactory
+import r_map
+from collections import defaultdict, ChainMap
 
 class RMapJSONParseError(KeyError):
     pass
 
 class RMapJSON(json.JSONEncoder):
     already_encoded = set()
+    "contents of this set should be bitfields only"
     def default(self, o):
         if o in self.already_encoded:
-            return {'__ref__' : o.uuid}
-        elif isinstance(o, RMapFactory.Node):
+            return {'_ref' : o.uuid}
+        elif isinstance(o, r_map.Node):
             dct = {n:getattr(o,n) for n in o._nb_attrs}
             dct['__type__'] = type(o).__name__
-            if o._children:
-                dct['children'] = list(o._children.values())
+            ref = dct.get('_ref')
+            if ref is not None:
+                alias = dct['_alias']
+                dct['_ref'] = ref.uuid
+                #only save overridden values
+                keys = o._nb_attrs - set(['_ref', '_alias'])
+                for k in keys:
+                    if k in dct and hasattr(ref, k):
+                        dct_val = dct[k]
+                        ref_val = getattr(ref, k)
+                        if dct_val == ref_val:
+                            dct.pop(k)
+
+            else:
+                dct['__children__'] = [c.uuid for c in o._children]
+
             self.already_encoded.add(o)
             return dct
         elif isinstance(o, set):
@@ -51,16 +55,16 @@ def from_json(json_str, **kwargs):
         try:
             parent = decoded[parent_uuid]
         except KeyError as e:
-            raise RMapJSONParseError("Cannot find object with uuid: %s "
+            raise RMapJSONParseError("Cannot find object with uuid: {} "
                                      "which is referenced by another node".format(
                                          parent_uuid)) from e
         for ref_uuid in ref_list:
             try:
                 ref_obj = decoded[ref_uuid]
             except KeyError as e:
-                raise RMapJSONParseError("Cannot find object with uuid: %s "
-                                "referenced from child %s with parent uuid: %s".format(
-                                    ref_uuid, parent_uuid))
+                raise RMapJSONParseError("Cannot find object with uuid: {} "
+                         "referenced from parent {} with uuid: {}".format(
+                         ref_uuid, parent, parent_uuid))
             parent._add(ref_obj)
             ref_obj.parent = parent
 
@@ -68,18 +72,29 @@ def from_json(json_str, **kwargs):
 
 def get_decoder():
     """Create a closure to hold a dictionary of already decoded items"""
+    #This strategy might need to be revised to allow a root node to be deferred
+    #to the todo list
     decoded = {}
     todo = defaultdict(list)
     def decoder(dct):
         if '__type__' in dct:
+            ref_uuid = dct.get['_ref']
+            if ref_uuid is not None:
+                if ref_uuid not in decoded:
+                    todo['_root'].append(dct)
+                    return dct
+                else:
+                    ref_obj = decoded[ref_uuid]
+                    obj_map = ChainMap(dct, ref_obj.__dict__)
             #print("In decoder, dct: ", dct)
-            obj_type = getattr(RMapFactory, dct.pop('__type__'))
-            obj = obj_type(**{k:dct.get(k) for k in obj_type._nb_attrs})
+            #if dct.get('_alias'):
+            obj_type = getattr(r_map, dct.pop('__type__'))
+            obj = obj_type(**{k:obj_map.get(k) for k in obj_type._nb_attrs})
             decoded[obj.uuid] = obj
             if 'children' in dct:
                 for child in dct['children']:
                     if isinstance(child, dict):
-                        ref = child.get('__ref__')
+                        ref = child.get('_ref')
                         if ref:
                             parent_uuid = obj.uuid
                             todo[parent_uuid].append(ref)

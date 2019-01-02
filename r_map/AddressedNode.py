@@ -1,6 +1,6 @@
 from .Node import Node
 class AddressedNode(Node):
-    _nb_attrs = ('local_address',)
+    _nb_attrs = frozenset(['local_address'])
     def __init__(self, *, local_address=0, **kwargs):
         '''Args:
             local_address(int): local address is the address of the node without

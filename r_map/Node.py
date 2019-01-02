@@ -8,10 +8,10 @@ logger = logging.getLogger(__name__)
 class NodeMeta(type):
     '''used to magically update the nb_attrs'''
     def __new__(mcs, name, bases, attrs):
-        _nb_attrs = attrs.get('_nb_attrs', ())
+        _nb_attrs = attrs.get('_nb_attrs', frozenset())
         for b in bases:
             if hasattr(b, '_nb_attrs'):
-                _nb_attrs += b._nb_attrs
+                _nb_attrs |= b._nb_attrs
         attrs['_nb_attrs'] = _nb_attrs
 
         new_class = super().__new__(mcs, name, bases, attrs)
@@ -21,16 +21,19 @@ class Node(metaclass=NodeMeta):
     '''A node in the tree data structure representing the register map'''
     #these names are not to be looked for in children
     #when pickling, only be concerned with these
-    _nb_attrs = ('name', 'descr', 'doc', 'uuid')
+    _nb_attrs = frozenset(['name', 'descr', 'doc', 'uuid', '_ref', '_alias'])
 
     def __init__(self, *, parent=None, **kwargs):
         '''
         Args:
-            name(str)   : A the name of the Node
-            parent(Node): Either a Node or None
-            descr(str)  : A description for the node (usually shorter than doc)
-            doc(str)    : A documentation string for the node
-            uuid(str)   : A Universal Identifier
+            name(str)      : A the name of the Node
+            parent(Node)   : Either a Node or None
+            descr(str)     : A description for the node (usually shorter than doc)
+            doc(str)       : A documentation string for the node
+            uuid(str)      : A Universal Identifier
+            _ref(Node)     : Either a Node or None
+            _alias(bool)   : Indicating if the node is an instance (False) or
+                             alias (True)
         '''
         for key in self._nb_attrs:
             setattr(self, key, kwargs.get(key, None))
@@ -43,7 +46,7 @@ class Node(metaclass=NodeMeta):
         self.__doc__ = next((i for i in (self.descr, self.doc) if i), 'No description')
         self.uuid = kwargs.get('uuid', uuid4().hex)
 
-        unexpecteds = kwargs.keys() - set(self._nb_attrs)
+        unexpecteds = kwargs.keys() - self._nb_attrs
         if unexpecteds:
             raise ValueError("Got unexpected keyword arguments: {}".format('\n'.join(unexpecteds)))
 
@@ -57,17 +60,13 @@ class Node(metaclass=NodeMeta):
             return item in self._children.values()
 
     def __dir__(self):
-        local_files = {f for f in vars(self) if f[0] != '_'}
+        local_items = {f for f in vars(self) if f[0] != '_'}
         children    = {c for c in self._children}
         class_objs  = {s for s in dir(type(self)) if s[0] != '_'}
-        return list(local_files | children | class_objs)
+        return list(local_items | children | class_objs)
 
     def __getattr__(self, name):
         if name in self._nb_attrs or name[:2] == '__':
-            #print("raising exception in __getattr__ with name: {}".format(name))
-            #if name == 'name':
-            #    import pdb
-            #    pdb.set_trace()
             raise AttributeError(f"{name} not found")
         try:
             return self._children[name]
@@ -83,7 +82,7 @@ class Node(metaclass=NodeMeta):
     def __iter__(self):
         return (child for child in self._children.values())
 
-    def _walk(self, levels=2, top_down=True):
+    def _walk(self, levels=2, top_down=True, expand_arrayed=True):
         'return up to <levels> worth of nodes'
         if levels == 0: #i am a leaf node
             yield self
@@ -114,16 +113,28 @@ class Node(metaclass=NodeMeta):
             key=lambda x:x[0]))
         return f"{type(self).__name__}({','.join(arg_strings)})"
 
-    def _copy(self, *, parent=None, **kwargs):
-        """A create a deep copy of this object"""
+    def _copy(self, *, parent=None, alias=False, deep_copy=True, **kwargs):
+        """A create a deep copy of this object
+        :param parent: The parent obj
+        :param alias: Indicate if the copy should be an alias. This means that
+                      any children of the new copy which happens to be bitfields
+                      won't be copies but references of this node. This
+                      attribute is passed down through the node hierarchy and is
+                      used by BitFieldRef instances to determine if a copy of
+                      its Bitfield child should be made.
+        :deep_copy: Create a deep copy of this instance. 
+        """
         existing_items = {k:getattr(self, k) for k in self._nb_attrs}
         #It's a copy so shouldn't have the same uuid
         existing_items.pop('uuid', None)
         existing_items.update(kwargs)
         existing_items['parent'] = parent
+        existing_items['_ref'] = self
+        existing_items['_alias'] = alias
         new_obj = type(self)(**existing_items)
-        for obj in self:
-            obj._copy(parent=new_obj)
+        if deep_copy:
+            for obj in self:
+                obj._copy(parent=new_obj, alias=alias)
         return new_obj
 
 
