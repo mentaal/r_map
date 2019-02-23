@@ -1,5 +1,8 @@
 from .Node import Node
-class BitFieldRef(Node):
+from .ValueNodeMixins import UnsignedValueNodeMixin
+from .ValidationError import ValidationError
+
+class BitFieldRef(UnsignedValueNodeMixin, Node):
     _nb_attrs = frozenset(['reg_offset', 'slice_width', 'field_offset'])
     """Class to represent a reference to a bitfield. This is useful
     as a register may only have access to a portion of bitfield. The "portion"
@@ -18,6 +21,11 @@ class BitFieldRef(Node):
         """
         super().__init__(slice_width=slice_width, reg_offset=reg_offset,
                 field_offset=field_offset, **kwargs)
+
+        if slice_width < 0:
+            raise ValueError("Slice width needs to be greater than 0")
+        if field_offset < 0:
+            raise ValueError("field_offsett needs to be greater than 0")
 
         self.__slice_width_setup(slice_width)
 
@@ -70,6 +78,19 @@ class BitFieldRef(Node):
             new_obj._add(self.bf)
 
         return new_obj
+
+    def validate(self):
+        yield from super().validate()
+        if self._bf is None:
+            yield ValidationError( self, 'No child bitfield present')
+        else:
+            bf = self._bf
+            if self.slice_width > bf.width:
+                yield ValidationError(
+                        self,
+                        "Slice width is larger than bitfield's width")
+
+
 
 
 

@@ -5,8 +5,7 @@ class AddressedNode(Node):
         '''Args:
             local_address(int): local address is the address of the node without
             consideration of any offset that a parent node may impose'''
-        super().__init__(**kwargs)
-        self.local_address = local_address
+        super().__init__(local_address=local_address, **kwargs)
 
     def __str__(self):
         return super().__str__() + ' ({:#010x})'.format(self.address)

@@ -1,9 +1,18 @@
 from .Node import Node
+from .ValueNodeMixins import UnsignedValueNodeMixin
 import r_map
-class Enumeration(Node):
+
+class Enumeration(UnsignedValueNodeMixin, Node):
     _nb_attrs = frozenset(['value',])
 
     __hash__ = Node.__hash__
+
+    @property
+    def value(self):
+        return self._value
+    @value.setter
+    def value(self, value):
+        self._value = value
 
     def __str__(self):
         return super().__str__() + ' value: {}'.format(self.value)
@@ -47,7 +56,4 @@ class Enumeration(Node):
             return self.value >= other
         else:
             return NotImplemented
-
-
-
 

@@ -13,4 +13,15 @@ def test_enumeration_inst():
     assert enum2 > enum1
     assert enum1 != 'enum1'
 
+def test_enumeration_negative_validation_error():
+    enum1 = r_map.Enumeration(name='enum1', value=-1)
+    errors = list(enum1.validate())
+    assert len(errors) == 1
+
+def test_enumeration_no_name():
+    enum1 = r_map.Enumeration(name='', value=-1)
+    errors = list(enum1.validate())
+    assert len(errors) == 2
+
+
 

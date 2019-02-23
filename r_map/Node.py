@@ -38,17 +38,34 @@ class Node(metaclass=NodeMeta):
         for key in self._nb_attrs:
             setattr(self, key, kwargs.get(key, None))
 
+        self._children = {}
+        self._parent = None
         self.parent = parent
-        #automatically install it in the parent
-        if parent and isinstance(parent, Node):
-            self.parent._add(self)
-        self._children = OD()
         self.__doc__ = next((i for i in (self.descr, self.doc) if i), 'No description')
         self.uuid = kwargs.get('uuid', uuid4().hex)
 
         unexpecteds = kwargs.keys() - self._nb_attrs
         if unexpecteds:
             raise ValueError("Got unexpected keyword arguments: {}".format('\n'.join(unexpecteds)))
+
+    @property
+    def parent(self):
+        return self._parent
+    @parent.setter
+    def parent(self, val):
+        if val is None:
+            #uninstall self from parent as well
+            p = self._parent
+            if p:
+                if self in p:
+                    p._children.pop(self.name)
+            self._parent = None
+        elif val is not None and not isinstance(val, Node):
+            raise ValueError("Parent node needs to be of type Node or NoneType")
+        else:
+            self._parent = val
+            if self not in val:
+                val._add(self)
 
     def __str__(self):
         return f'{type(self).__name__}: {self.name}'
@@ -77,6 +94,10 @@ class Node(metaclass=NodeMeta):
         return self._children[item]
 
     def _add(self, item):
+        if item in self:
+            return #already added
+        elif item.name in self:
+            item.parent = None #maintain consistency as we're replacing an existing item
         self._children[item.name] = item
 
     def __iter__(self):
@@ -136,6 +157,15 @@ class Node(metaclass=NodeMeta):
             for obj in self:
                 obj._copy(parent=new_obj, alias=alias)
         return new_obj
+
+    def validate(self):
+        """Do some validation checks on the parameters set on this instance and
+        that of the child bitfield
+
+        :returns: Iterable of errors found
+        """
+        for child in self:
+            yield from child.validate()
 
 
 

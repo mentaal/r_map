@@ -1,7 +1,10 @@
 from math import ceil
 from .Node import Node
+from .ValueNodeMixins import UnsignedValueNodeMixin
+from collections import defaultdict
 import r_map.Enumeration #get around circular dependancy
-class BitField(Node):
+from .ValidationError import ValidationError
+class BitField(UnsignedValueNodeMixin, Node):
     _nb_attrs = frozenset(['width', 'reset_val', 'access'])
     def __init__(self, *, parent=None, width=1, reset_val=0, access='XX', **kwargs):
         """Initialization function for BitField type.
@@ -24,6 +27,8 @@ class BitField(Node):
         """
         if width < 1:
             raise ValueError("Width needs to be >= 1")
+        if reset_val < 1:
+            raise ValueError("reset_val needs to be >= 1")
         mask = (1 << width) - 1
         reset_val &= mask
 
@@ -72,4 +77,17 @@ class BitField(Node):
     @property
     def annotation(self):
         return next((a.name for a in self if a.value == self.value), hex(self.value))
+
+    def validate(self):
+        yield from super().validate()
+        used_vals = defaultdict(list)
+
+        for c in self:
+            used_vals[c.value].append(c)
+
+        val_template =  "The following enumerations have the same value: {}"
+        for key, vals in used_vals.items():
+            if len(vals) > 1:
+                yield ValidationError(
+                        self, val_template.format(', '.join(map(str, vals))))
 
