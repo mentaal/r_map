@@ -24,7 +24,7 @@ class Register(UnsignedValueNodeMixin, AddressedNode):
 
     @property
     def value(self):
-        return reduce(ior, (f.value for f in self))
+        return reduce(ior, (f.value for f in self), 0)
 
     @value.setter
     def value(self, x):
@@ -38,7 +38,8 @@ class Register(UnsignedValueNodeMixin, AddressedNode):
     def validate(self):
         yield from super().validate()
         continue_checks = True
-        if len(self) == 0:
+        num_bitfieldrefs = len(self)
+        if num_bitfieldrefs == 0:
             yield ValidationError(self, "No bitfieldrefs present")
 
         for c in self:
@@ -47,12 +48,13 @@ class Register(UnsignedValueNodeMixin, AddressedNode):
                 yield ValidationError(self, f"Child object: {c!s} is not of type"
                         f"BitFieldRef, it's of type: {type(c)}")
         if continue_checks:
-            #check for overlapping bitfieldrefs
-            first, *remaining = sorted(self, key=lambda x:x.reg_offset)
-            for second in remaining:
-                if second.reg_offset < first.reg_offset + first.slice_width:
-                    yield ValidationError(self,
-                            f"{second!s} overlaps with {first!s}")
-                first = second
+            if num_bitfieldrefs > 1:
+                #check for overlapping bitfieldrefs
+                first, *remaining = sorted(self, key=lambda x:x.reg_offset)
+                for second in remaining:
+                    if second.reg_offset < first.reg_offset + first.slice_width:
+                        yield ValidationError(self,
+                                f"{second!s} overlaps with {first!s}")
+                    first = second
 
 

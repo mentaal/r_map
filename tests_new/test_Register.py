@@ -43,6 +43,8 @@ def test_reg_copy(reg):
     assert reg1.bf1_ref.bf1 is not reg2.bf1_ref.bf1
 
 def test_reg_alias(reg):
+    """test that when a register is made to be an alias of another, it  gets
+    deep copied until the level of bitfieldref."""
     root = r_map.Node(name='root')
     reg1 = reg
 
@@ -63,5 +65,18 @@ def test_install_bitfield(reg, bf):
     errors = list(reg.validate())
     assert len(errors) == 1
     assert 'is not of type' in errors[0].error
+
+def test_validate_no_bitrefs_present():
+    """Check that validation flags an error if no bitfieldrefs are present"""
+    reg = r_map.Register(name='some_reg')
+    errors = list(reg.validate())
+    for error in errors:
+        print(str(error))
+    assert len(errors) == 1
+    assert 'No bitfieldrefs present' in errors[0].error
+
+def test_iterate_over_reg(reg):
+    bfs = list(reg)
+    assert len(bfs) == 2
 
 

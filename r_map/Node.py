@@ -40,9 +40,9 @@ class Node(metaclass=NodeMeta):
 
         self._children = {}
         self._parent = None
-        self.parent = parent
         self.__doc__ = next((i for i in (self.descr, self.doc) if i), 'No description')
         self.uuid = kwargs.get('uuid', uuid4().hex)
+        self.parent = parent
 
         unexpecteds = kwargs.keys() - self._nb_attrs
         if unexpecteds:
@@ -71,10 +71,12 @@ class Node(metaclass=NodeMeta):
         return f'{type(self).__name__}: {self.name}'
 
     def __contains__(self, item):
-        if isinstance(item, str):
+        if isinstance(item, Node):
+            return item.name in self._children
+        elif isinstance(item, str):
             return item in self._children
         else:
-            return item in self._children.values()
+            return NotImplemented
 
     def __dir__(self):
         local_items = {f for f in vars(self) if f[0] != '_'}
@@ -94,11 +96,16 @@ class Node(metaclass=NodeMeta):
         return self._children[item]
 
     def _add(self, item):
-        if item in self:
-            return #already added
-        elif item.name in self:
-            item.parent = None #maintain consistency as we're replacing an existing item
-        self._children[item.name] = item
+        if isinstance(item, Node):
+            if item in self:
+                return #already added
+            elif item.name in self:
+                item.parent = None #maintain consistency as we're replacing an existing item
+            self._children[item.name] = item
+        else:
+            raise ValueError("Expected argument to be of type Node or one of "
+                    "its descendents")
+
 
     def __iter__(self):
         return (child for child in self._children.values())
@@ -166,7 +173,4 @@ class Node(metaclass=NodeMeta):
         """
         for child in self:
             yield from child.validate()
-
-
-
 

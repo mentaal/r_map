@@ -10,15 +10,14 @@ class RMapJSONParseError(KeyError):
     pass
 
 class RMapJSON(json.JSONEncoder):
-    already_encoded = set()
-    "contents of this set should be bitfields only"
+    already_encoded = {}
     def default(self, o):
-        if o in self.already_encoded:
-            return {'_ref' : o.uuid}
-        elif isinstance(o, r_map.Node):
+        if isinstance(o, r_map.Node):
+            if o.uuid in self.already_encoded:
+                return {'_ref' : o.uuid}
             dct = {n:getattr(o,n) for n in o._nb_attrs}
             dct['__type__'] = type(o).__name__
-            ref = dct.get('_ref')
+            ref = dct['_ref']
             if ref is not None:
                 alias = dct['_alias']
                 dct['_ref'] = ref.uuid
@@ -32,10 +31,12 @@ class RMapJSON(json.JSONEncoder):
                             dct.pop(k)
 
             else:
-                dct['__children__'] = [c.uuid for c in o._children]
+                if len(o):
+                    dct['__children__'] = list(o)
+            self.already_encoded[o.uuid] = o
 
-            self.already_encoded.add(o)
-            return dct
+            #no need to add nulls
+            return {k:v for k,v in dct.items() if v}
         elif isinstance(o, set):
             return list(o)
         else:
@@ -86,6 +87,8 @@ def get_decoder():
                 else:
                     ref_obj = decoded[ref_uuid]
                     obj_map = ChainMap(dct, ref_obj.__dict__)
+            else:
+                obj_map = dct
             #print("In decoder, dct: ", dct)
             #if dct.get('_alias'):
             obj_type = getattr(r_map, dct.pop('__type__'))

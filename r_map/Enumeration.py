@@ -5,8 +5,6 @@ import r_map
 class Enumeration(UnsignedValueNodeMixin, Node):
     _nb_attrs = frozenset(['value',])
 
-    __hash__ = Node.__hash__
-
     @property
     def value(self):
         return self._value
