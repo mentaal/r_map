@@ -10,6 +10,13 @@ def test_node_insertion():
     assert child in parent
     assert child.name in parent
 
+def test_node_copy_uuid():
+    n1 = r_map.Node(name='node')
+    n2 = r_map.Node(name='node2')
+    assert n1.uuid != n2.uuid
+    n1_copy = n1._copy(uuid=n1.uuid)
+    assert n1_copy.uuid == n1.uuid
+
 
 
 

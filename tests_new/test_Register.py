@@ -1,7 +1,8 @@
-import r_map
 import random
 from operator import or_
 from functools import reduce, partial
+
+import r_map
 
 
 rand_int = partial(random.randint, 0, 0xFFFFFFFF)
@@ -78,5 +79,21 @@ def test_validate_no_bitrefs_present():
 def test_iterate_over_reg(reg):
     bfs = list(reg)
     assert len(bfs) == 2
+
+def test_serialize_reg(reg):
+    root = r_map.Node(name='root')
+    reg_copy = reg._copy(name=reg.name+'_copy', alias=True)
+    assert reg_copy.bf1_ref.bf1 is reg.bf1_ref.bf1
+    assert reg.bf1_ref.reg_offset == 0
+    root._add(reg)
+    root._add(reg_copy)
+    primitive = r_map.dump(root)
+    assert reg.bf1_ref.reg_offset == 0
+    print(primitive)
+    root2 = r_map.load(primitive)
+    assert root2.reg1.bf1_ref.bf1 is root2.reg1_copy.bf1_ref.bf1
+    assert root2.reg1.bf2_ref.bf2 is root2.reg1_copy.bf2_ref.bf2
+    assert root2.reg1.bf2_ref is not root2.reg1_copy.bf2_ref
+    assert root2.reg1.bf2_ref.uuid != root2.reg1_copy.bf2_ref.uuid
 
 

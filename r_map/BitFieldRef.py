@@ -1,4 +1,5 @@
 from .Node import Node
+from r_map import BitField
 from .ValueNodeMixins import UnsignedValueNodeMixin
 from .ValidationError import ValidationError
 
@@ -38,12 +39,23 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
     def bf(self):
         return self._bf
 
-    def _add(self, bitfield):
-        super()._add(bitfield)
-        self._bf = bitfield
-        bitfield._references.add(self)
+    def _add(self, bf):
+        if isinstance(bf, BitField):
+            if bf in self:
+                return #already added
+            self._children[bf.name] = bf
+        else:
+            raise ValueError("Expected argument to be of type Node or one of "
+                    "its descendents")
         if self.slice_width == 0:
-            self.__slice_width_setup(bitfield.width)
+            self.__slice_width_setup(bf.width)
+
+        self._bf = bf
+        bf._references.add(self)
+        ref_count = len(bf._references)
+        if ref_count > 1:
+            self._alias = True
+            self._ref = next(iter(bf._references - set([self])))
 
     @property
     def reset_val(self):
@@ -63,7 +75,7 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
         bf.value = old_bf_value | (new_value << self.field_offset)
 
     def _copy(self, *, alias=False, **kwargs):
-        """A create a deep copy of this object
+        """Create a deep copy of this object
         Implementation within this class is almost the same as that from Node.
         The difference is that if this object is an alias, do not instantiate
         copies of children. Merely add existing bitfield as this object's
@@ -72,7 +84,7 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
         if alias:
             kwargs['deep_copy'] = False
 
-        new_obj = super()._copy(**kwargs)
+        new_obj = super()._copy(alias=alias, **kwargs)
 
         if alias:
             new_obj._add(self.bf)

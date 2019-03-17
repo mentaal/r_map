@@ -18,11 +18,9 @@ def get_reg(parent=None, name='reg1'):
     bf2 = r_map.BitField(name='bf2', width=10, parent=bf2_ref, reset_val=0x312)
     return reg
 
-
 @pytest.fixture
 def bf():
     return get_bf()
-
 
 @pytest.fixture
 def reg():

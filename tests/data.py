@@ -58,7 +58,7 @@ def get_data():
                         reg_offset=current_position)
             yield  BitField(name=bf_name,
                     parent=bf_ref, width = new_width,
-                    reset=randint(0, (1<<new_width)-1))
+                    reset_val=randint(0, (1<<new_width)-1))
             if randint(0,100) > 60:
                 break
 
@@ -73,7 +73,7 @@ def get_data():
         if bfs:
             enum = Enumeration(name='spi_enabled', value=1, parent=bfs[0])
             enum2 = Enumeration(name='spi_disabled', value=0, parent=bfs[0])
-    dodgy = RegisterMap(name='name', parent=root, descr='A dodgily name registermap!',
+    dodgy = RegisterMap(name='name', parent=root, descr='A dodgily named registermap!',
             local_address=0x50000000)
 
     return root

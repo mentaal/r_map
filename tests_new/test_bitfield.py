@@ -1,4 +1,5 @@
 import pytest
+import r_map
 
 def test_bf_reset_on_creation(bf):
     assert bf.value == bf.reset_val
@@ -50,4 +51,16 @@ def test_bitfield_same_enum_value_validation(bf):
     errors = list(bf.validate())
     assert len(errors) == 1
     print(errors[0])
+
+def test_bf_serialization(bf):
+    primitive = r_map.dump(bf)
+    bf2 = r_map.load(primitive)
+    assert len(bf2) == len(bf)
+
+
+    attrs = next(iter(bf))._nb_attrs - set(['parent'])
+    for c in bf:
+        for a in attrs:
+            assert getattr(c, a) == getattr(bf2[c.name], a)
+
 

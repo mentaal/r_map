@@ -27,8 +27,8 @@ class BitField(UnsignedValueNodeMixin, Node):
         """
         if width < 1:
             raise ValueError("Width needs to be >= 1")
-        if reset_val < 1:
-            raise ValueError("reset_val needs to be >= 1")
+        if reset_val < 0:
+            raise ValueError("reset_val needs to be >= 0")
         mask = (1 << width) - 1
         reset_val &= mask
 
