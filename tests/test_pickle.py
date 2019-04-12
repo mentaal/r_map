@@ -10,5 +10,9 @@ def test_pickle(data):
     print(dir(up))
 
     #print("Up: {}".format(up.name))
+    count = 0
+    for n in up._walk(levels=-1):
+        count += 1
+    print(f"{count} nodes in count")
 
 
