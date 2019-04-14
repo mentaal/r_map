@@ -98,7 +98,7 @@ def test_serialize_reg(reg):
 
 
 def test_arrayed_register(reg):
-    arrayed_reg = r_map.ArrayedNode(
+    arrayed_reg = r_map.ArrayedAddressed(
             name='TX_FIFO[nn]_[n]',
             start_index=0,
             incr_index=4,

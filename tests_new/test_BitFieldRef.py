@@ -1,6 +1,6 @@
+import json
 import r_map
 import random
-
 
 def test_bitfield_0_slice_width():
     width = 5
@@ -30,7 +30,59 @@ def test_arrayed_bitfieldref(bf_ref):
     assert r.reg_offset == 8
     assert r.descr == 'irq for pin 8'
 
+def test_reg_with_arrayed_bf_ref():
+    reg = r_map.Register(name='a_reg')
+    bf = r_map.BitField(name='a_bf', width=1)
+    bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0)
+    bf_ref._add(bf)
 
+    arrayed_bf = r_map.ArrayedNode(
+            parent=reg,
+            name='irq_[n]',
+            start_index=0,
+            incr_index=1,
+            descr='irq for pin [n]',
+            end_index=12,
+            increment=0x1,
+            base_val=0,
+            base_node=bf_ref)
+
+    val = 0x235
+    reg.value = val
+    assert reg.value == val
+
+    for i in range(12):
+        assert arrayed_bf[i].value == val&(1<<i)
+
+def test_array_bf_serialization():
+    reg = r_map.Register(name='a_reg')
+    bf = r_map.BitField(name='a_bf', width=1)
+    bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0)
+    bf_ref._add(bf)
+
+    arrayed_bf = r_map.ArrayedNode(
+            parent=reg,
+            name='irq_[n]',
+            start_index=0,
+            incr_index=1,
+            descr='irq for pin [n]',
+            end_index=12,
+            increment=0x1,
+            base_val=0,
+            base_node=bf_ref)
+
+    reg_primitive = r_map.dump(reg)
+    print(reg_primitive)
+    #print(json.dumps(reg_primitive, indent='\t'))
+    reg2 = r_map.load(reg_primitive)
+
+    val = 0x235
+    reg2.value = val
+    assert reg2.value == val
+
+    arrayed_bf = reg2['irq_[n]']
+    for i in range(12):
+        assert arrayed_bf[i].value == val&(1<<i)
 
 
 

@@ -45,17 +45,20 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
                 return #already added
             self._children[bf.name] = bf
         else:
-            raise ValueError("Expected argument to be of type Node or one of "
-                    "its descendents")
+            raise ValueError("Expected argument to be of type BitField or one "
+                             "of its descendents")
         if self.slice_width == 0:
             self.__slice_width_setup(bf.width)
 
         self._bf = bf
+        if not hasattr(bf, '_references'):
+            bf._references = set()
         bf._references.add(self)
         ref_count = len(bf._references)
         if ref_count > 1:
             self._alias = True
-            self._ref = next(iter(bf._references - set([self])))
+            if not self._ref:
+                self._ref = next(iter(bf._references - set([self])))
 
     @property
     def reset_val(self):

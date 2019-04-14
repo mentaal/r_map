@@ -7,24 +7,7 @@ from .ValidationError import ValidationError
 class BitField(UnsignedValueNodeMixin, Node):
     _nb_attrs = frozenset(['width', 'reset_val', 'access'])
     def __init__(self, *, parent=None, width=1, reset_val=0, access='XX', **kwargs):
-        """Initialization function for BitField type.
-
-        .. warning ::
-
-            A variable: '_references' of type set is created before delegating
-            to the base class' initialization function. This is a bit of an ugly
-            hack to support references being automatically updated when:
-
-            1. A bitfield is initialized, the base class adds it into the parent
-               class's _children dictionary.
-            2. When a BitField is added to a BitFieldRef's _children dictionary
-               `_add` is overriden in BitFieldRef to also add the
-               BitFieldRef instance to the BitField's set of references.
-
-            When initialization occurs, 1 above calls 2 which requires that the
-            _references set already exist. Without it, infinite recursion will
-            result.
-        """
+        """Initialization function for BitField type"""
         if width < 1:
             raise ValueError("Width needs to be >= 1")
         if reset_val < 0:
@@ -32,7 +15,6 @@ class BitField(UnsignedValueNodeMixin, Node):
         mask = (1 << width) - 1
         reset_val &= mask
 
-        self._references = set()
         super().__init__(parent=parent,
                          width=width,
                          reset_val=reset_val,

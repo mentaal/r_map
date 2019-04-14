@@ -39,7 +39,6 @@ class Node(metaclass=NodeMeta):
             setattr(self, key, kwargs.get(key, None))
 
         self._children = {}
-        self._parent = None
         self.__doc__ = next((i for i in (self.descr, self.doc) if i), 'No description')
         self.uuid = kwargs.get('uuid', uuid4().hex)
         self.parent = parent
@@ -106,7 +105,6 @@ class Node(metaclass=NodeMeta):
             raise ValueError("Expected argument to be of type Node or one of "
                     "its descendents")
 
-
     def __iter__(self):
         return (child for child in self._children.values())
 
@@ -149,10 +147,10 @@ class Node(metaclass=NodeMeta):
         :param parent: The parent obj
         :param alias: Indicate if the copy should be an alias. This means that
                       any children of the new copy which happens to be bitfields
-                      won't be copies but references of this node. This
-                      attribute is passed down through the node hierarchy and is
-                      used by BitFieldRef instances to determine if a copy of
-                      its Bitfield child should be made.
+                      won't be copies but references. This attribute is passed
+                      down through the node hierarchy and is used by BitFieldRef
+                      instances to determine if a copy of its Bitfield child
+                      should be made.
         :deep_copy: Create a deep copy of this instance. 
         """
         existing_items = {k:getattr(self, k) for k in self._nb_attrs}

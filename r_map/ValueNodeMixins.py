@@ -1,13 +1,11 @@
-from abc import ABC, abstractmethod
 from .ValidationError import ValidationError
 class UnsignedValueNodeMixin:
     """Mixin for nodes which are expected to have an unsigned value. Additional
     behavior is also provided for classes of this type"""
 
     @property
-    @abstractmethod
     def value(self):
-        pass
+        raise NotImplementedError
 
     def validate(self):
         yield from super().validate()
