@@ -4,6 +4,8 @@ from .Register import Register
 from .RegisterMap import RegisterMap
 from .Enumeration import Enumeration
 from .BitFieldRef import BitFieldRef
+from .ArrayedNode import ArrayedNode
+from .AddressedNode import AddressedNode
 from .serialize import load, dump
 from .ValidationError import ValidationError
 

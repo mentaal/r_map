@@ -23,5 +23,11 @@ def bf():
     return get_bf()
 
 @pytest.fixture
+def bf_ref(bf):
+    bf_ref = r_map.BitFieldRef(name=bf.name+'_ref', reg_offset=0)
+    bf_ref._add(bf)
+    return bf_ref
+
+@pytest.fixture
 def reg():
     return get_reg()

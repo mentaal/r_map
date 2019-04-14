@@ -135,7 +135,10 @@ class Node(metaclass=NodeMeta):
 
     def __repr__(self):
         items = ((k,getattr(self, k)) for k in self._nb_attrs)
+        #don't want these to be in the repr
         me = {k:v for (k,v) in items if v is not None}
+        if '_ref' in me:
+            me['_ref'] = me['_ref'].uuid
 
         arg_strings = (f'{k}={v}' for (k,v) in sorted(me.items(),
             key=lambda x:x[0]))
