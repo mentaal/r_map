@@ -71,6 +71,9 @@ def test_array_bf_serialization():
             base_val=0,
             base_node=bf_ref)
 
+    reg.value = 0x12
+    assert reg.value == 0x12
+
     reg_primitive = r_map.dump(reg)
     print(reg_primitive)
     #print(json.dumps(reg_primitive, indent='\t'))

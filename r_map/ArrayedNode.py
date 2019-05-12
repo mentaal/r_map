@@ -8,10 +8,9 @@ class ArrayedNode(Node):
     '''A node that is used to hold an arrayed definition of instances.
 
     The instances could be of various types such as RegisterMap, Register and
-    BitField. If the ArrayedNode is marked as an alias, it should only be an
-    alias of another ArrayedNode. When this is the case, the `base_node`
-    attribute isn't used and instead the base node is sourced from the `_ref`
-    object.
+    BitField. If `_ref` is not None, it should only be of type ArrayedNode.
+    When this is the case, the `base_node` attribute isn't used and instead the
+    base node is sourced from the `_ref` object.
     '''
     _nb_attrs = frozenset(['start_index', 'incr_index', 'end_index',
                            'increment', 'base_val', 'base_node', 'array_letter'])
@@ -29,6 +28,9 @@ class ArrayedNode(Node):
                 enumerate(self.index_re.finditer(self.name or '')))
         #subtractions here are to cater for removal of brackets
         self._parse_specs = [(x[0]-i, x[1]-i-2) for i,x in iter_spans]
+
+        if self._ref:
+            self.base_node = self._ref.base_node
 
     @staticmethod
     def _around_spans(s, spans):
@@ -51,20 +53,6 @@ class ArrayedNode(Node):
             return name == self.base_name
         else:
             return super().__contains__(item)
-
-    def _add(self, item):
-        if isinstance(item, (r_map.BitFieldRef, r_map.AddressedNode)):
-            if item in self:
-                return #already added
-            self.base_node = item
-        else:
-            raise ValueError("Expected argument to be of type "
-                             "Register/BitFieldRef or one of its descendents")
-        if not hasattr(item, '_references'):
-            item._references = set()
-        item._references.add(self)
-
-
 
     @property
     def value(self):
@@ -92,7 +80,7 @@ class ArrayedNode(Node):
         if index not in self._range_val:
             raise IndexError(f"Requested item with index: {index} out of range:"
                              f" {self._range_val}")
-        sub = partial(self.index_re.sub, repl=self.make_repl_func(index))
+        sub = partial(self.index_re.sub, repl=self._make_repl_func(index))
         instance_name = sub(string=self.name or '')
 
         inst = self._children.get(instance_name)
@@ -103,11 +91,19 @@ class ArrayedNode(Node):
             inc = (index//self.incr_index)*self.increment + self.base_val
             kwargs = {key:inc}
 
+            #if we're an alias, treat the dynamically created inst from _ref as
+            #the base node
+            if self._alias:
+                base_node = self._ref._load_instance(index)
+            else:
+                base_node = self.base_node
+
             inst = self.base_node._copy(
                     parent=self,
                     name=instance_name,
                     descr=sub(string=self.descr or ''),
                     doc=sub(string=self.doc or ''),
+                    alias=self._alias,
                     **kwargs)
             self._children[instance_name] = inst
         return inst

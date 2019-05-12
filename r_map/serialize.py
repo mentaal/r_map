@@ -52,6 +52,18 @@ def _load(dct, parent, already_loaded, todo):
             obj = T(parent=parent, **vals)
             children = dct.get('children')
             if children:
+                if isinstance(obj, r_map.ArrayedNode):
+                    if len(children) > 1:
+                        raise RuntimeError("An ArrayedNode shouldn't have more "
+                                           "than 1 child.")
+                    #Children of ArrayedNode are dynamically generated only.
+                    #Marking base_node as child during serialization to leverage
+                    #existing infrastucture
+                    child = _load(children[0],
+                                  parent=None,
+                                  already_loaded=already_loaded,
+                                  todo=todo)
+                    obj.base_node = child
                 for child_dct in children:
                     _load(child_dct,
                           parent=obj,
@@ -79,9 +91,6 @@ def dump(node, already_dumped:dict=None):
     dct = {n:getattr(node,n) for n in node._nb_attrs}
     dct['type'] = type(node).__name__
     ref = dct['_ref']
-    base_node = dct.get('base_node')
-    if base_node:
-        dct['base_node'] = dump(base_node, already_dumped)
     if ref is not None:
         dct['_ref'] = ref.uuid
         #only save overridden values
@@ -92,10 +101,12 @@ def dump(node, already_dumped:dict=None):
                 ref_val = getattr(ref, k)
                 if dct_val == ref_val:
                     dct.pop(k)
-
-    else:
-        if len(node) and not isinstance(node, r_map.ArrayedNode):
-            dct['children'] = [dump(c, already_dumped) for c in node]
+    elif isinstance(node, r_map.ArrayedNode):
+        base_node = dct.pop('base_node')
+        if base_node:
+            dct['children'] = [dump(base_node, already_dumped)]
+    elif len(node):
+        dct['children'] = [dump(c, already_dumped) for c in node]
     already_dumped[node.uuid] = node
 
     #no need to add nulls

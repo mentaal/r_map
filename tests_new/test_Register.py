@@ -98,7 +98,7 @@ def test_serialize_reg(reg):
 
 
 def test_arrayed_register(reg):
-    arrayed_reg = r_map.ArrayedAddressed(
+    arrayed_reg = r_map.ArrayedNode(
             name='TX_FIFO[nn]_[n]',
             start_index=0,
             incr_index=4,
@@ -111,7 +111,6 @@ def test_arrayed_register(reg):
     r = arrayed_reg[4]
     assert r.name == 'TX_FIFO04_4'
     assert r.local_address == 0x104
-    #breakpoint()
     r = arrayed_reg['TX_FIFO08_8']
     assert r.name == 'TX_FIFO08_8'
     assert r.local_address == 0x108

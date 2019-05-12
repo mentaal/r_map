@@ -39,6 +39,7 @@ class Node(metaclass=NodeMeta):
             setattr(self, key, kwargs.get(key, None))
 
         self._children = {}
+        self._parent = None #needed because it's referenced by `parent` property
         self.__doc__ = next((i for i in (self.descr, self.doc) if i), 'No description')
         self.uuid = kwargs.get('uuid', uuid4().hex)
         self.parent = parent
@@ -95,6 +96,8 @@ class Node(metaclass=NodeMeta):
         return self._children[item]
 
     def _add(self, item):
+        """Add Node to self._children. Called from `parent` property
+        """
         if isinstance(item, Node):
             if item in self:
                 return #already added
