@@ -1,9 +1,7 @@
 import random
 from operator import or_
 from functools import reduce, partial
-
 import r_map
-
 
 rand_int = partial(random.randint, 0, 0xFFFFFFFF)
 
@@ -135,7 +133,8 @@ def test_arrayed_ref_register(reg):
             base_val=0x100,
             base_node=reg)
 
-    arrayed_reg_2 = arrayed_reg._copy(alias=True)
+    arrayed_reg_2 = arrayed_reg._copy(alias=True, name='TX_FIFO2[nn]_[n]')
+    print(f"parse_specs: ", arrayed_reg_2._parse_specs)
 
     r1 = arrayed_reg[4]
     r1.value = 0x12
@@ -145,9 +144,65 @@ def test_arrayed_ref_register(reg):
     assert r1.value == 0x12
     assert r2.value == 0x23
 
-    r1_copy = arrayed_reg[4]
+    r1_copy = arrayed_reg_2[4]
     assert r1_copy.value == 0x12
-    r2_copy = arrayed_reg[8]
+    r2_copy = arrayed_reg_2[8]
+    assert r2_copy.value == 0x23
+
+
+def test_arrayed_ref_register_serialized(reg):
+    root = r_map.Node(name='root')
+
+    reg = r_map.Register(name='a_reg')
+    bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0, parent=reg)
+    bf = r_map.BitField(name='a_bf', width=8, parent=bf_ref)
+
+    arrayed_reg = r_map.ArrayedNode(
+            parent=root,
+            name='TX_FIFO[nn]_[n]',
+            start_index=0,
+            incr_index=4,
+            descr='TX FIFO register [nn]',
+            end_index=20*4,
+            increment=0x4,
+            base_val=0x100,
+            base_node=reg)
+
+    arrayed_reg_2 = arrayed_reg._copy(alias=True,
+                                      name='TX_FIFO2[nn]_[n]',
+                                      parent=root)
+
+    r1 = arrayed_reg[4]
+    r1.value = 0x12
+    assert r1.value == 0x12
+    r2 = arrayed_reg['TX_FIFO08_8']
+    r2.value = 0x23
+    assert r1.value == 0x12
+    assert r2.value == 0x23
+
+    r1_copy = arrayed_reg_2[4]
+    assert r1_copy.value == 0x12
+    r2_copy = arrayed_reg_2[8]
+    assert r2_copy.value == 0x23
+
+
+    primitive = r_map.dump(root)
+    root2 = r_map.load(primitive)
+
+    arrayed_reg_copy = root2['TX_FIFO[nn]_[n]']
+    arrayed_reg_2_copy = root2['TX_FIFO2[nn]_[n]']
+
+    r1 = arrayed_reg_copy[4]
+    r1.value = 0x12
+    assert r1.value == 0x12
+    r2 = arrayed_reg_copy['TX_FIFO08_8']
+    r2.value = 0x23
+    assert r1.value == 0x12
+    assert r2.value == 0x23
+
+    r1_copy = arrayed_reg_2_copy[4]
+    assert r1_copy.value == 0x12
+    r2_copy = arrayed_reg_2_copy[8]
     assert r2_copy.value == 0x23
 
 

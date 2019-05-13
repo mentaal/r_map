@@ -76,14 +76,14 @@ def _load(dct, parent, already_loaded, todo):
         raise ValueError(f"Expected dictionary type argument. Got {type(dct)}")
     return obj
 
-def dump(node, already_dumped:dict=None):
+def dump(node, _already_dumped:dict=None):
     """Return a dictionary representing this object
     dump is called recursively to transform each Node object into a
     dictionary
     """
-    if already_dumped is None:
-        already_dumped = {}
-    if node.uuid in already_dumped:
+    if _already_dumped is None:
+        _already_dumped = {}
+    if node.uuid in _already_dumped:
         dct = {'_ref' : node.uuid}
         if node._alias:
             dct['_alias'] = node._alias
@@ -104,10 +104,10 @@ def dump(node, already_dumped:dict=None):
     elif isinstance(node, r_map.ArrayedNode):
         base_node = dct.pop('base_node')
         if base_node:
-            dct['children'] = [dump(base_node, already_dumped)]
+            dct['children'] = [dump(base_node, _already_dumped)]
     elif len(node):
-        dct['children'] = [dump(c, already_dumped) for c in node]
-    already_dumped[node.uuid] = node
+        dct['children'] = [dump(c, _already_dumped) for c in node]
+    _already_dumped[node.uuid] = node
 
     #no need to add nulls
     return {k:v for k,v in dct.items() if v is not None}

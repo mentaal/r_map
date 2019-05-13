@@ -18,7 +18,8 @@ class ArrayedNode(Node):
                  increment=1, array_letter='n', **kwargs):
 
         super().__init__(start_index=start_index, incr_index=incr_index,
-                         end_index=end_index, increment=increment, **kwargs)
+                         end_index=end_index, increment=increment,
+                         array_letter=array_letter, **kwargs)
         self.index_re = re.compile(rf'\[{array_letter}+\]')
         self.base_name = self.index_re.sub('', self.name)
         self._range_val = range(start_index, end_index, incr_index)
