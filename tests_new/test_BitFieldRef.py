@@ -56,9 +56,8 @@ def test_reg_with_arrayed_bf_ref():
 
 def test_array_bf_serialization():
     reg = r_map.Register(name='a_reg')
-    bf = r_map.BitField(name='a_bf', width=1)
     bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0)
-    bf_ref._add(bf)
+    bf = r_map.BitField(name='a_bf', width=1, parent=bf_ref)
 
     arrayed_bf = r_map.ArrayedNode(
             parent=reg,
