@@ -38,6 +38,9 @@ class Node(metaclass=NodeMeta):
         for key in self._nb_attrs:
             setattr(self, key, kwargs.get(key, None))
 
+
+        if self.name is None:
+            raise ValueError("Passed None for name parameter. name is a required parameter")
         self._children = {}
         self._parent = None #needed because it's referenced by `parent` property
         self.__doc__ = next((i for i in (self.descr, self.doc) if i), 'No description')
@@ -146,7 +149,7 @@ class Node(metaclass=NodeMeta):
         return f"{type(self).__name__}({','.join(arg_strings)})"
 
     def _copy(self, *, parent=None, alias=False, deep_copy=True, **kwargs):
-        """A create a deep copy of this object
+        """Create a deep copy of this object
         :param parent: The parent obj
         :param alias: Indicate if the copy should be an alias. This means that
                       any children of the new copy which happens to be bitfields
@@ -154,7 +157,7 @@ class Node(metaclass=NodeMeta):
                       down through the node hierarchy and is used by BitFieldRef
                       instances to determine if a copy of its Bitfield child
                       should be made.
-        :deep_copy: Create a deep copy of this instance. 
+        :deep_copy: Create a deep copy of this instance.
         """
         existing_items = {k:getattr(self, k) for k in self._nb_attrs}
         #It's a copy so shouldn't have the same uuid

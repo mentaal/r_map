@@ -205,4 +205,13 @@ def test_arrayed_ref_register_serialized(reg):
     r2_copy = arrayed_reg_2_copy[8]
     assert r2_copy.value == 0x23
 
+def test_reg_copy_serialized(reg):
+    reg_copy = reg._copy()
+
+    primitive = r_map.dump(reg_copy)
+    reg_copy_2 = r_map.load(primitive)
+    assert len(reg_copy_2) == len(reg_copy)
+
+    errors = list(reg_copy_2.validate())
+    assert len(errors) == 0
 

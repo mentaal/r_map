@@ -5,6 +5,7 @@ import r_map
 
 
 def load(dct, parent=None, already_loaded=None, todo=None):
+    """Create an r_map from a dictionary of primitive objects"""
     if already_loaded is None:
         already_loaded = {}
     if todo is None:
@@ -24,7 +25,6 @@ def load(dct, parent=None, already_loaded=None, todo=None):
                                f" with parent: {parent}")
     return obj
 
-
 def _load(dct, parent, already_loaded, todo):
     obj = None
     if isinstance(dct, dict):
@@ -35,6 +35,12 @@ def _load(dct, parent, already_loaded, todo):
         uuid = dct.get('uuid')
         if ref_uuid:
             ref_obj = already_loaded.get(ref_uuid)
+            if not ref_obj and 'children' in dct:
+                children = dct.get('children')
+                ref_obj = _load(children[0],
+                                parent=None,
+                                already_loaded=already_loaded,
+                                todo=todo)
             if ref_obj:
                 vals = {k:v for k,v in dct.items() if k in ref_obj._nb_attrs
                                                    and v is not None}
@@ -64,11 +70,12 @@ def _load(dct, parent, already_loaded, todo):
                                   already_loaded=already_loaded,
                                   todo=todo)
                     obj.base_node = child
-                for child_dct in children:
-                    _load(child_dct,
-                          parent=obj,
-                          already_loaded=already_loaded,
-                          todo=todo)
+                else:
+                    for child_dct in children:
+                        _load(child_dct,
+                              parent=obj,
+                              already_loaded=already_loaded,
+                              todo=todo)
         else:
             raise ValueError(f"Could not load data: {dct}")
         already_loaded[obj.uuid] = obj
@@ -101,6 +108,10 @@ def dump(node, _already_dumped:dict=None):
                 ref_val = getattr(ref, k)
                 if dct_val == ref_val:
                     dct.pop(k)
+        #this ensures that when a node in the tree is serialized all of its
+        #dependencies are serialized as well
+        if ref.uuid not in _already_dumped:
+            dct['children'] = [dump(ref, _already_dumped)]
     elif isinstance(node, r_map.ArrayedNode):
         base_node = dct.pop('base_node')
         if base_node:
