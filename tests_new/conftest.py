@@ -11,7 +11,7 @@ def get_bf(parent=None):
     return bf
 
 def get_reg(parent=None, name='reg1'):
-    reg = r_map.Register(parent=parent, name=name, width=28)
+    reg = r_map.Register(parent=parent, name=name, width=28, local_address=0)
     bf1_ref = r_map.BitFieldRef(name='bf1_ref', reg_offset=0, parent=reg)
     bf1 = r_map.BitField(name='bf1', width=5, parent=bf1_ref, reset_val=0x15)
     bf2_ref = r_map.BitFieldRef(name='bf2_ref', reg_offset=bf1.width, parent=reg)

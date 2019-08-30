@@ -67,7 +67,7 @@ def test_install_bitfield(reg, bf):
 
 def test_validate_no_bitrefs_present():
     """Check that validation flags an error if no bitfieldrefs are present"""
-    reg = r_map.Register(name='some_reg')
+    reg = r_map.Register(name='some_reg', local_address=0)
     errors = list(reg.validate())
     for error in errors:
         print(str(error))
@@ -118,7 +118,7 @@ def test_arrayed_register(reg):
 def test_arrayed_ref_register(reg):
     root = r_map.Node(name='root')
 
-    reg = r_map.Register(name='a_reg')
+    reg = r_map.Register(name='a_reg', local_address=0)
     bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0, parent=reg)
     bf = r_map.BitField(name='a_bf', width=8, parent=bf_ref)
 
@@ -153,7 +153,7 @@ def test_arrayed_ref_register(reg):
 def test_arrayed_ref_register_serialized(reg):
     root = r_map.Node(name='root')
 
-    reg = r_map.Register(name='a_reg')
+    reg = r_map.Register(name='a_reg', local_address=0)
     bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0, parent=reg)
     bf = r_map.BitField(name='a_bf', width=8, parent=bf_ref)
 

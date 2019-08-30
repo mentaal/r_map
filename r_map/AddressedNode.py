@@ -1,7 +1,7 @@
 from .Node import Node
 class AddressedNode(Node):
     _nb_attrs = frozenset(['local_address'])
-    def __init__(self, *, local_address=0, **kwargs):
+    def __init__(self, *, local_address, **kwargs):
         '''Args:
             local_address(int): local address is the address of the node without
             consideration of any offset that a parent node may impose'''

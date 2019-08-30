@@ -45,7 +45,7 @@ def get_data():
 
     spi = RegisterMap(name='spi', parent=root, descr='A registermap defining the SPI block',
             local_address=0x40000000)
-    cfgs = [Register(name=f'cfg{i}', parent=spi) for i in range(randint(10, 32))]
+    cfgs = [Register(name=f'cfg{i}', parent=spi, local_address=i*4) for i in range(randint(10, 32))]
 
     def get_field(parent):
         remaining_width = 32

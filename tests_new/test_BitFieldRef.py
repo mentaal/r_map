@@ -31,7 +31,7 @@ def test_arrayed_bitfieldref(bf_ref):
     assert r.descr == 'irq for pin 8'
 
 def test_reg_with_arrayed_bf_ref():
-    reg = r_map.Register(name='a_reg')
+    reg = r_map.Register(name='a_reg', local_address=0)
     bf = r_map.BitField(name='a_bf', width=1)
     bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0)
     bf_ref._add(bf)
@@ -55,7 +55,7 @@ def test_reg_with_arrayed_bf_ref():
         assert arrayed_bf[i].value == val&(1<<i)
 
 def test_array_bf_serialization():
-    reg = r_map.Register(name='a_reg')
+    reg = r_map.Register(name='a_reg', local_address=0)
     bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0)
     bf = r_map.BitField(name='a_bf', width=1, parent=bf_ref)
 
