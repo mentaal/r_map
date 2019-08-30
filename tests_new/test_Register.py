@@ -189,8 +189,8 @@ def test_arrayed_ref_register_serialized(reg):
     primitive = r_map.dump(root)
     root2 = r_map.load(primitive)
 
-    arrayed_reg_copy = root2['TX_FIFO[nn]_[n]']
-    arrayed_reg_2_copy = root2['TX_FIFO2[nn]_[n]']
+    arrayed_reg_copy = root2['TX_FIFO']
+    arrayed_reg_2_copy = root2['TX_FIFO2']
 
     r1 = arrayed_reg_copy[4]
     r1.value = 0x12

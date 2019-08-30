@@ -14,21 +14,25 @@ class ArrayedNode(Node):
     '''
     _nb_attrs = frozenset(['start_index', 'incr_index', 'end_index',
                            'increment', 'base_val', 'base_node', 'array_letter'])
-    def __init__(self, *, start_index=0, incr_index=1, end_index=1,
+    def __init__(self, *, name, start_index=0, incr_index=1, end_index=1,
                  increment=1, array_letter='n', **kwargs):
 
-        super().__init__(start_index=start_index, incr_index=incr_index,
+        index_re = re.compile(rf'\[{array_letter}+\]')
+        ugly_name, full_name = index_re.sub('', name), name
+        name = ugly_name.strip('_')
+        super().__init__(name=name, start_index=start_index, incr_index=incr_index,
                          end_index=end_index, increment=increment,
                          array_letter=array_letter, **kwargs)
-        self.index_re = re.compile(rf'\[{array_letter}+\]')
-        self.base_name = self.index_re.sub('', self.name)
+        self.index_re = index_re
         self._range_val = range(start_index, end_index, incr_index)
         self._make_repl_func = lambda i:lambda m:f'{i:0{m.end()-m.start()-2}}'
         #get a spec for getting the index from an argument name
         iter_spans = ((i*2, m.span()) for i,m in
-                enumerate(self.index_re.finditer(self.name or '')))
+                enumerate(index_re.finditer(full_name or '')))
         #subtractions here are to cater for removal of brackets
         self._parse_specs = [(x[0]-i, x[1]-i-2) for i,x in iter_spans]
+        self.full_name = full_name
+        self.ugly_name = ugly_name
 
         if self._ref:
             self.base_node = self._ref.base_node
@@ -51,7 +55,7 @@ class ArrayedNode(Node):
                 name, index = self._parse_name(item)
             except ValueError:
                 return False
-            return name == self.base_name
+            return name == self.ugly_name
         else:
             return super().__contains__(item)
 
@@ -82,7 +86,7 @@ class ArrayedNode(Node):
             raise IndexError(f"Requested item with index: {index} out of range:"
                              f" {self._range_val}")
         sub = partial(self.index_re.sub, repl=self._make_repl_func(index))
-        instance_name = sub(string=self.name or '')
+        instance_name = sub(string=self.full_name or '')
 
         inst = self._children.get(instance_name)
         if not inst:

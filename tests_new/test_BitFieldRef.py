@@ -82,7 +82,7 @@ def test_array_bf_serialization():
     reg2.value = val
     assert reg2.value == val
 
-    arrayed_bf = reg2['irq_[n]']
+    arrayed_bf = reg2['irq']
     for i in range(12):
         assert arrayed_bf[i].value == val&(1<<i)
 

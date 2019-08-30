@@ -22,11 +22,6 @@ def test_enumeration_negative_validation_error():
     errors = list(enum1.validate())
     assert len(errors) == 1
 
-def test_enumeration_no_name():
-    enum1 = r_map.Enumeration(name='', value=-1)
-    errors = list(enum1.validate())
-    assert len(errors) == 2
-
 def test_dump_enumeration():
     "test enumeration can be serialized to a dict"
     enum1 = r_map.Enumeration(name='enum1', value=1)

@@ -41,6 +41,8 @@ class Node(metaclass=NodeMeta):
 
         if self.name is None:
             raise ValueError("Passed None for name parameter. name is a required parameter")
+        #if not self.name.isidentifier():
+        #    raise ValueError("supplied name is not a valid identifier: {}".format(self.name))
         self._children = {}
         self._parent = None #needed because it's referenced by `parent` property
         self.__doc__ = next((i for i in (self.descr, self.doc) if i), 'No description')
