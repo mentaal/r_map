@@ -47,9 +47,12 @@ def elaborate_nodes(item, recurse=True):
         if isinstance(c, ArrayedNode):
             c.parent = None
             for instance in list(c):
-                item._add(instance)
+                #we want standalone copies
                 instance._ref = None
-        if recurse:
+                item._add(instance)
+                if recurse:
+                    elaborate_nodes(instance, recurse=True)
+        elif recurse:
             elaborate_nodes(c, recurse=True)
 
 

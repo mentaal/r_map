@@ -147,7 +147,7 @@ class Node(metaclass=NodeMeta):
         if '_ref' in me:
             me['_ref'] = me['_ref'].uuid
 
-        arg_strings = (f'{k}={v}' for (k,v) in sorted(me.items(),
+        arg_strings = (f'{k}={v!r}' for (k,v) in sorted(me.items(),
             key=lambda x:x[0]))
         return f"{type(self).__name__}({','.join(arg_strings)})"
 

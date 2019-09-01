@@ -36,6 +36,7 @@ def test_arrayed_register_map(reg):
 
     elaborate_nodes(root)
     convert_to_fixed_node(root)
+    print(list(map(str, root)))
 
     assert root.TX_FIFO2.address == 8
     assert 'TX_FIFO[m]' not in root
@@ -43,6 +44,7 @@ def test_arrayed_register_map(reg):
     prim = r_map.dump(root)
     root2 = r_map.load(prim)
     assert root2.TX_FIFO2.address == 8
+
 
 
 
