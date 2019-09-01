@@ -109,6 +109,7 @@ class Node(metaclass=NodeMeta):
             elif item.name in self:
                 item.parent = None #maintain consistency as we're replacing an existing item
             self._children[item.name] = item
+            item.parent = self
         else:
             raise ValueError("Expected argument to be of type Node or one of "
                     "its descendents")
@@ -150,7 +151,7 @@ class Node(metaclass=NodeMeta):
             key=lambda x:x[0]))
         return f"{type(self).__name__}({','.join(arg_strings)})"
 
-    def _copy(self, *, parent=None, alias=False, deep_copy=True, **kwargs):
+    def _copy(self, *, parent=None, alias=False, deep_copy=True, _add_ref=True, **kwargs):
         """Create a deep copy of this object
         :param parent: The parent obj
         :param alias: Indicate if the copy should be an alias. This means that
@@ -166,12 +167,13 @@ class Node(metaclass=NodeMeta):
         existing_items.pop('uuid', None)
         existing_items.update(kwargs)
         existing_items['parent'] = parent
-        existing_items['_ref'] = self
+        if _add_ref:
+            existing_items['_ref'] = self
         existing_items['_alias'] = alias
         new_obj = type(self)(**existing_items)
         if deep_copy:
             for obj in self:
-                obj._copy(parent=new_obj, alias=alias)
+                obj._copy(parent=new_obj, alias=alias, _add_ref=_add_ref)
         return new_obj
 
     def validate(self):

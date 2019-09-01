@@ -98,7 +98,7 @@ def dump(node, _already_dumped:dict=None):
     dct = {n:getattr(node,n) for n in node._nb_attrs}
     dct['type'] = type(node).__name__
     if isinstance(node, r_map.ArrayedNode):
-        dct['name'] = node.full_name
+        dct['name'] = node._full_name
     ref = dct['_ref']
     if ref is not None:
         dct['_ref'] = ref.uuid
