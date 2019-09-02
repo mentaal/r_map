@@ -1,4 +1,5 @@
 from .Node import Node
+from operator import attrgetter
 class AddressedNode(Node):
     _nb_attrs = frozenset(['local_address'])
     def __init__(self, *, local_address, **kwargs):
@@ -16,3 +17,11 @@ class AddressedNode(Node):
             return self.local_address + self.parent.address #allows for relative addressing
         else:
             return self.local_address
+
+    def __iter__(self):
+        children = list(Node.__iter__(self))
+        if any(not hasattr(c, 'address') for c in children):
+            return (s for s in children)
+        else:
+            return (s for s in sorted(children, key=attrgetter('address')))
+

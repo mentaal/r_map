@@ -151,3 +151,9 @@ class ArrayedNode(Node):
         new_obj = super()._copy(alias=alias, deep_copy=False, **kwargs)
         return new_obj
 
+    def __getattr__(self, name):
+        if name in ('reg_offset', 'local_address'):
+            return self.base_val
+        else:
+            return super().__getattr__(name)
+

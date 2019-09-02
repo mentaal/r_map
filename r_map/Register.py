@@ -1,10 +1,11 @@
 from math import ceil
 from functools import reduce
-from operator import ior
+from operator import ior, attrgetter
 import r_map
 from .AddressedNode import AddressedNode
 from .ValueNodeMixins import UnsignedValueNodeMixin
 from .ValidationError import ValidationError
+from .Node import Node
 
 class Register(UnsignedValueNodeMixin, AddressedNode):
     _nb_attrs = frozenset(['width'])
@@ -50,11 +51,35 @@ class Register(UnsignedValueNodeMixin, AddressedNode):
         if continue_checks:
             if num_bitfieldrefs > 1:
                 #check for overlapping bitfieldrefs
-                first, *remaining = sorted(self, key=lambda x:x.reg_offset)
+                first, *remaining = list(self)
                 for second in remaining:
                     if second.reg_offset < first.reg_offset + first.slice_width:
                         yield ValidationError(self,
                                 f"{second!s} overlaps with {first!s}")
                     first = second
+
+    def read(self):
+        val = self._reg_read_func(self.address)
+        self.value = val
+        #Intentionally return val here and not self.value
+        #User may with to inspect the value of otherwise reserved or unspecified
+        #bit fields
+        return val
+
+    def write(self, val=None):
+        if val is None:
+            val = self.value
+        else:
+            self.value = val
+        self._reg_write_func(self.address, val)
+
+
+    def __iter__(self):
+        children = list(Node.__iter__(self))
+        if any(not hasattr(c, 'reg_offset') for c in children):
+            return (s for s in children)
+        else:
+            return (s for s in sorted(children, key=attrgetter('reg_offset')))
+
 
 

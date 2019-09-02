@@ -1,7 +1,7 @@
 from collections import OrderedDict as OD
 from uuid import uuid4
 from itertools import chain
-from operator import attrgetter
+from operator import itemgetter
 import logging
 logger = logging.getLogger(__name__)
 
@@ -17,11 +17,35 @@ class NodeMeta(type):
         new_class = super().__new__(mcs, name, bases, attrs)
         return new_class
 
+class GetIoFunc:
+    """Non data descriptor to get a user supplied IO function from a parent node
+    if necessary
+    """
+    def __set_name__(self, owner, name):
+        self.name = name
+    def __get__(self, instance, owner):
+        """As this is a non data descriptor, the instance won't ever have a
+        reference to the supplied function. Need to query the parent
+        """
+        if not instance:
+            raise AttributeError("Descriptor only to be used on instances")
+        if instance.parent:
+            func = getattr(instance.parent, self.name)
+            setattr(instance, self.name, func)
+            return func
+        else:
+            raise AttributeError(f"No {self.name} function provided!")
+
 class Node(metaclass=NodeMeta):
     '''A node in the tree data structure representing the register map'''
     #these names are not to be looked for in children
     #when pickling, only be concerned with these
     _nb_attrs = frozenset(['name', 'descr', 'doc', 'uuid', '_ref', '_alias'])
+
+    _reg_read_func = GetIoFunc()
+    _reg_write_func = GetIoFunc()
+    _block_read_func = GetIoFunc()
+    _block_write_func = GetIoFunc()
 
     def __init__(self, *, parent=None, **kwargs):
         '''
@@ -117,7 +141,7 @@ class Node(metaclass=NodeMeta):
     def __iter__(self):
         return (child for child in self._children.values())
 
-    def _walk(self, levels=2, top_down=True, expand_arrayed=True):
+    def _walk(self, levels=2, top_down=True):
         'return up to <levels> worth of nodes'
         if levels == 0: #i am a leaf node
             yield self
@@ -147,8 +171,7 @@ class Node(metaclass=NodeMeta):
         if '_ref' in me:
             me['_ref'] = me['_ref'].uuid
 
-        arg_strings = (f'{k}={v!r}' for (k,v) in sorted(me.items(),
-            key=lambda x:x[0]))
+        arg_strings = (f'{k}={v!r}' for (k,v) in sorted(me.items(), key=itemgetter(0)))
         return f"{type(self).__name__}({','.join(arg_strings)})"
 
     def _copy(self, *, parent=None, alias=False, deep_copy=True, _add_ref=True, **kwargs):
