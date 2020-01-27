@@ -1,9 +1,9 @@
 """Module to take an existing r_map and replace all instances of ArrayedNode
-with its children. Also fix addresses of AddressedNodes to safe the tree lookup
+with its children. Also fix addresses of AddressedNodes to save the tree lookup
 penalty imposed within their address properties. This involves manipulating the
-tree in memory and providing and overridden AddressedNode which can be used when
+tree in memory and providing an overridden AddressedNode which can be used when
 deserializing the tree. The idea is to create a simplified tree with only a root
-node with registermaps as childdren
+node with registermaps as children
 """
 from .AddressedNode import AddressedNode
 from .RegisterMap import RegisterMap
