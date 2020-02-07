@@ -56,6 +56,7 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
         bf._references.add(self)
         ref_count = len(bf._references)
         if ref_count > 1:
+            print(f"{bf} has multiple references: {bf._references}")
             self._alias = True
             if not self._ref:
                 self._ref = next(iter(bf._references - set([self])))

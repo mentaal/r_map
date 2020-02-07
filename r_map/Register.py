@@ -58,7 +58,7 @@ class Register(UnsignedValueNodeMixin, AddressedNode):
                                 f"{second!s} overlaps with {first!s}")
                     first = second
 
-    def read(self):
+    def read(self) -> int:
         val = self._reg_read_func(self.address)
         self.value = val
         #Intentionally return val here and not self.value

@@ -73,3 +73,37 @@ class BitField(UnsignedValueNodeMixin, Node):
                 yield ValidationError(
                         self, val_template.format(', '.join(map(str, vals))))
 
+    def _get_parent_regs(self):
+        if not hasattr(self, '_references'):
+            raise ValueError("BitField doesn't have any parents so cannot "
+                             "perform an IO")
+        return [bf_ref.parent for bf_ref in self._references]
+
+
+    def write(self, val=None, always_write:bool=True):
+        """Perform a bitfield write using containing registers's IO.
+        :param val: The value to update the bitfield with
+        :param always_write: If True, even if the new value matches the just
+                             read back value (as part of read-modify-write),
+                             write the value anyway
+        """
+        #first attempt to update the bitfield's value
+        if val is not None:
+            self.value = val
+        val = self.value
+        #do a read-modify-write of all of the parent registers
+        parent_regs = self._get_parent_regs()
+        for r in parent_regs:
+            r.read()
+        same_value = self.value == val
+        self.value = val #in case they're different
+        if always_write or not same_value:
+            for r in parent_regs:
+                print(f"Writing parent register: {r}")
+                r.write()
+
+    def read(self) -> int:
+        for r in self._get_parent_regs():
+            print(f"Reading parent register: {r}")
+            r.read()
+        return self.value

@@ -98,3 +98,13 @@ def test_copied_and_aliased_bitfield(bf):
         assert not copy._alias, "BitFieldRef copy is an alias but it shouldn't be"
     assert len(bf._references) == 1, "BitField has multiple references but it shouldn't"
 
+def test_automatic_alias(bf):
+    """Ensure that copies can be made of bitfields without having them become
+    aliases
+    """
+    bf1_ref = r_map.BitFieldRef(name='bf1_ref', reg_offset=0, slice_width=0)
+    bf1_ref_copy = r_map.BitFieldRef(name='bf1_ref_copy', reg_offset=0, slice_width=0)
+    bf1_ref._add(bf)
+    bf1_ref_copy._add(bf)
+    assert bf1_ref_copy._alias, "bf1_ref_copy should be an alias but isn't"
+
