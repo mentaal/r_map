@@ -62,7 +62,7 @@ class Register(UnsignedValueNodeMixin, AddressedNode):
         val = self._reg_read_func(self.address)
         self.value = val
         #Intentionally return val here and not self.value
-        #User may with to inspect the value of otherwise reserved or unspecified
+        #User may wish to inspect the value of otherwise reserved or unspecified
         #bit fields
         return val
 
