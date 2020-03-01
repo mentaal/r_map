@@ -12,8 +12,6 @@ class BitField(UnsignedValueNodeMixin, Node):
             raise ValueError("Width needs to be >= 1")
         if reset_val < 0:
             raise ValueError("reset_val needs to be >= 0")
-        mask = (1 << width) - 1
-        reset_val &= mask
 
         super().__init__(parent=parent,
                          width=width,
@@ -21,6 +19,8 @@ class BitField(UnsignedValueNodeMixin, Node):
                          access=access,
                          **kwargs)
 
+        mask = (1 << width) - 1
+        reset_val &= mask
         self.mask = mask
         self._value = self.reset_val
 

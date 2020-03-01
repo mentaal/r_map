@@ -84,7 +84,8 @@ def _load(dct, parent, already_loaded, todo):
     return obj
 
 def dump(node, _already_dumped:dict=None):
-    """Return a dictionary representing this object
+    """Return a dictionary representing this object.
+
     dump is called recursively to transform each Node object into a
     dictionary
     """

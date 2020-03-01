@@ -78,17 +78,20 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
 
         bf.value = old_bf_value | (new_value << self.field_offset)
 
-    def _copy(self, *, alias=False, **kwargs):
+    def _copy(self, *, alias=False, _context=None, **kwargs):
         """Create a deep copy of this object
         Implementation within this class is almost the same as that from Node.
         The difference is that if this object is an alias, do not instantiate
         copies of children. Merely add existing bitfield as this object's
         bitfield and inject self as a reference"""
 
+        if _context is None:
+            _context = {}
+
         if alias:
             kwargs['deep_copy'] = False
 
-        new_obj = super()._copy(alias=alias, **kwargs)
+        new_obj = super()._copy(alias=alias, _context=_context, **kwargs)
 
         if alias:
             new_obj._add(self.bf)

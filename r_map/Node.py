@@ -1,3 +1,4 @@
+from __future__ import annotations
 from collections import OrderedDict as OD
 from uuid import uuid4
 from itertools import chain
@@ -125,7 +126,7 @@ class Node(metaclass=NodeMeta):
         return self._children[item]
 
     def _add(self, item):
-        """Add Node to self._children. Called from `parent` property
+        """Add node to self._children. Called from `parent` property
         """
         if isinstance(item, Node):
             if item in self:
@@ -136,7 +137,7 @@ class Node(metaclass=NodeMeta):
             item.parent = self
         else:
             raise ValueError("Expected argument to be of type Node or one of "
-                    "its descendents")
+                             "its descendents")
 
     def __iter__(self):
         return (child for child in self._children.values())
@@ -174,7 +175,8 @@ class Node(metaclass=NodeMeta):
         arg_strings = (f'{k}={v!r}' for (k,v) in sorted(me.items(), key=itemgetter(0)))
         return f"{type(self).__name__}({','.join(arg_strings)})"
 
-    def _copy(self, *, parent=None, alias=False, deep_copy=True, _add_ref=True, **kwargs):
+    def _copy(self, *, parent:Node=None, alias:bool=False, deep_copy:bool=True,
+              _add_ref:bool=True, _context:dict=None, **kwargs):
         """Create a deep copy of this object
         :param parent: The parent obj
         :param alias: Indicate if the copy should be an alias. This means that
@@ -183,8 +185,21 @@ class Node(metaclass=NodeMeta):
                       down through the node hierarchy and is used by BitFieldRef
                       instances to determine if a copy of its Bitfield child
                       should be made.
-        :deep_copy: Create a deep copy of this instance.
+        :param deep_copy: Create a deep copy of this instance.
+        :param _add_ref: Indicate if a reference to to the object being copied
+                         should be added to the newly created copy
+        :param _context: A dictionary holding mapping of original objects to
+                         newly created copies. This is essential for ensuring
+                         that when the same child bitfield is being copied from
+                         multiple parent bitfield references, only a single
+                         newly created copy will be used
+        :returns: The newly created copy
         """
+        if _context is None:
+            _context = {}
+        elif self in _context:
+            return _context[self] # I've already been copied
+
         existing_items = {k:getattr(self, k) for k in self._nb_attrs}
         #It's a copy so shouldn't have the same uuid
         existing_items.pop('uuid', None)
@@ -194,9 +209,16 @@ class Node(metaclass=NodeMeta):
             existing_items['_ref'] = self
         existing_items['_alias'] = alias
         new_obj = type(self)(**existing_items)
+        _context[self] = new_obj
+
         if deep_copy:
             for obj in self:
-                obj._copy(parent=new_obj, alias=alias, _add_ref=_add_ref)
+                if obj in _context: #it's already been replaced
+                    new_obj._add(_context[obj])
+                else:
+                    obj._copy(parent=new_obj, alias=alias, _add_ref=_add_ref,
+                              _context=_context)
+
         return new_obj
 
     def validate(self):
