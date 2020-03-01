@@ -107,15 +107,24 @@ def test_array_bf_serialization():
 #    bf1_ref._add(bf)
 #    bf1_ref_copy._add(bf)
 #    assert bf1_ref_copy._alias, "bf1_ref_copy should be an alias but isn't"
-#
-#def test_spanned_bitfield_deep_copy(bf):
-#    """Ensure that deep copying a node maintains the integrity of spanned
-#    bitfields
-#    """
-#    bf1_ref = r_map.BitFieldRef(name='bf1_ref', reg_offset=0, slice_width=0)
-#    bf1_ref._add(bf)
-#    bf1_ref_copy = r_map.BitFieldRef(name='bf1_ref_copy', reg_offset=0, slice_width=0)
-#    bf1_ref_copy._add(bf)
-#    assert
-#    assert bf1_ref_copy._alias, "bf1_ref_copy should be an alias but isn't"
 
+def test_spanned_bitfield_deep_copy(bf):
+    """Ensure that deep copying a node maintains the integrity of spanned
+    bitfields
+    """
+    bf1_ref = r_map.BitFieldRef(name='bf1_ref', reg_offset=0, slice_width=4)
+    bf1_ref._add(bf)
+    bf1_ref2 = r_map.BitFieldRef(name='bf1_ref2', reg_offset=0, slice_width=4,
+                                 field_offset=4)
+    bf1_ref2._add(bf)
+
+    assert bf1_ref.bf is bf1_ref2.bf
+
+    root = r_map.Node(name='root')
+    root._add(bf1_ref)
+    root._add(bf1_ref2)
+
+
+    root_copy = root._copy()
+
+    assert root_copy.bf1_ref.bf is root_copy.bf1_ref2.bf
