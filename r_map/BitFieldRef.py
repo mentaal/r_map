@@ -56,7 +56,12 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
         bf._references.add(self)
         ref_count = len(bf._references)
         if ref_count > 1:
-            print(f"{bf} has multiple references: {bf._references}")
+
+            # this line is a bit confusing an ambiguous. It doesn't intend to
+            # indicate that mulitple references from a bitfield means that some
+            # of the bitfieldrefs are aliases. The _alias boolean is used here
+            # when deserializing the bitfield to not make a copy and instead to
+            # use an already created instance
             self._alias = True
             if not self._ref:
                 self._ref = next(iter(bf._references - set([self])))
