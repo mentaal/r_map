@@ -115,7 +115,7 @@ class ArrayedNode(Node):
                     doc=sub(string=self.doc or ''),
                     alias=self._alias,
                     **kwargs)
-            self._children[instance_name] = inst
+            self._add(inst)
         return inst
 
     def __iter__(self):
@@ -149,6 +149,8 @@ class ArrayedNode(Node):
         #always pass deep_copy=False here because we never want to copy children
         #in an ArrayedNode
         new_obj = super()._copy(alias=alias, deep_copy=False, **kwargs)
+        if new_obj.base_node == None:
+            new_obj.base_node = self.base_node
         return new_obj
 
     def __getattr__(self, name):

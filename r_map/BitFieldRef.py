@@ -56,7 +56,6 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
         bf._references.add(self)
         ref_count = len(bf._references)
         if ref_count > 1:
-
             # this line is a bit confusing an ambiguous. It doesn't intend to
             # indicate that mulitple references from a bitfield means that some
             # of the bitfieldrefs are aliases. The _alias boolean is used here
@@ -90,6 +89,7 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
         copies of children. Merely add existing bitfield as this object's
         bitfield and inject self as a reference"""
 
+        #breakpoint()
         if _context is None:
             _context = {}
 

@@ -48,11 +48,10 @@ class Node(metaclass=NodeMeta):
     _block_read_func = GetIoFunc()
     _block_write_func = GetIoFunc()
 
-    def __init__(self, *, parent=None, **kwargs):
+    def __init__(self, **kwargs):
         '''
         Args:
             name(str)      : A the name of the Node
-            parent(Node)   : Either a Node or None
             descr(str)     : A description for the node (usually shorter than doc)
             doc(str)       : A documentation string for the node
             uuid(str)      : A Universal Identifier
@@ -62,17 +61,15 @@ class Node(metaclass=NodeMeta):
         '''
         for key in self._nb_attrs:
             setattr(self, key, kwargs.get(key, None))
-
+        self._parent = None
 
         if self.name is None:
             raise ValueError("Passed None for name parameter. name is a required parameter")
         #if not self.name.isidentifier():
         #    raise ValueError("supplied name is not a valid identifier: {}".format(self.name))
         self._children = {}
-        self._parent = None #needed because it's referenced by `parent` property
         self.__doc__ = next((i for i in (self.descr, self.doc) if i), 'No description')
         self.uuid = kwargs.get('uuid', uuid4().hex)
-        self.parent = parent
 
         unexpecteds = kwargs.keys() - self._nb_attrs
         if unexpecteds:
@@ -81,21 +78,29 @@ class Node(metaclass=NodeMeta):
     @property
     def parent(self):
         return self._parent
-    @parent.setter
-    def parent(self, val):
-        if val is None:
-            #uninstall self from parent as well
-            p = self._parent
-            if p:
-                if self in p:
-                    p._children.pop(self.name)
-            self._parent = None
-        elif val is not None and not isinstance(val, Node):
-            raise ValueError("Parent node needs to be of type Node or NoneType")
+
+    def _add(self, item):
+        """Add node to self._children. Called from `parent` property
+        """
+        if isinstance(item, Node):
+            if item in self:
+                return #already added
+            elif item.name in self:
+                if item.parent:
+                    #maintain consistency as we're replacing an existing item
+                    item.parent._remove(item)
+            self._children[item.name] = item
+            item._parent = self
         else:
-            self._parent = val
-            if self not in val:
-                val._add(self)
+            raise ValueError("Expected argument to be of type Node or one of "
+                             "its descendents")
+    def _remove(self, item):
+        if isinstance(item, Node) and item in self:
+            self._children.pop(item.name)
+            item._parent = None
+        else:
+            raise ValueError("Expected argument to be of type Node or one of "
+                             "its descendents")
 
     def __str__(self):
         return f'{type(self).__name__}: {self.name}'
@@ -124,20 +129,6 @@ class Node(metaclass=NodeMeta):
 
     def __getitem__(self, item):
         return self._children[item]
-
-    def _add(self, item):
-        """Add node to self._children. Called from `parent` property
-        """
-        if isinstance(item, Node):
-            if item in self:
-                return #already added
-            elif item.name in self:
-                item.parent = None #maintain consistency as we're replacing an existing item
-            self._children[item.name] = item
-            item.parent = self
-        else:
-            raise ValueError("Expected argument to be of type Node or one of "
-                             "its descendents")
 
     def __iter__(self):
         return (child for child in self._children.values())
@@ -175,10 +166,9 @@ class Node(metaclass=NodeMeta):
         arg_strings = (f'{k}={v!r}' for (k,v) in sorted(me.items(), key=itemgetter(0)))
         return f"{type(self).__name__}({','.join(arg_strings)})"
 
-    def _copy(self, *, parent:Node=None, alias:bool=False, deep_copy:bool=True,
+    def _copy(self, *, alias:bool=False, deep_copy:bool=True,
               _add_ref:bool=True, _context:dict=None, **kwargs):
         """Create a deep copy of this object
-        :param parent: The parent obj
         :param alias: Indicate if the copy should be an alias. This means that
                       any children of the new copy which happens to be bitfields
                       won't be copies but references. This attribute is passed
@@ -204,7 +194,6 @@ class Node(metaclass=NodeMeta):
         #It's a copy so shouldn't have the same uuid
         existing_items.pop('uuid', None)
         existing_items.update(kwargs)
-        existing_items['parent'] = parent
         if _add_ref:
             existing_items['_ref'] = self
         existing_items['_alias'] = alias
@@ -216,8 +205,9 @@ class Node(metaclass=NodeMeta):
                 if obj in _context: #it's already been replaced
                     new_obj._add(_context[obj])
                 else:
-                    obj._copy(parent=new_obj, alias=alias, _add_ref=_add_ref,
-                              _context=_context)
+                    new_child_obj = obj._copy(alias=alias, _add_ref=_add_ref,
+                                              _context=_context)
+                    new_obj._add(new_child_obj)
 
         return new_obj
 

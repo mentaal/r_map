@@ -6,15 +6,14 @@ import r_map.Enumeration #get around circular dependancy
 from .ValidationError import ValidationError
 class BitField(UnsignedValueNodeMixin, Node):
     _nb_attrs = frozenset(['width', 'reset_val', 'access'])
-    def __init__(self, *, parent=None, width=1, reset_val=0, access='XX', **kwargs):
+    def __init__(self, *, width=1, reset_val=0, access='XX', **kwargs):
         """Initialization function for BitField type"""
         if width < 1:
             raise ValueError("Width needs to be >= 1")
         if reset_val < 0:
             raise ValueError("reset_val needs to be >= 0")
 
-        super().__init__(parent=parent,
-                         width=width,
+        super().__init__(width=width,
                          reset_val=reset_val,
                          access=access,
                          **kwargs)
