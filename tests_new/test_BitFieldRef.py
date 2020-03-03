@@ -5,7 +5,8 @@ import random
 def test_bitfield_0_slice_width():
     width = 5
     bf1_ref = r_map.BitFieldRef(name='bf1_ref', reg_offset=0, slice_width=0)
-    bf = r_map.BitField(name='bf', width=width, reset_val=0x15, parent=bf1_ref)
+    bf = r_map.BitField(name='bf', width=width, reset_val=0x15)
+    bf1_ref._add(bf)
 
     assert bf1_ref.slice_width == bf.width, "bitfield reference slice width did"\
             "not automatically update to the width of the child's bitfield when"\
@@ -37,7 +38,6 @@ def test_reg_with_arrayed_bf_ref():
     bf_ref._add(bf)
 
     arrayed_bf = r_map.ArrayedNode(
-            parent=reg,
             name='irq_[n]',
             start_index=0,
             incr_index=1,
@@ -46,6 +46,7 @@ def test_reg_with_arrayed_bf_ref():
             increment=0x1,
             base_val=0,
             base_node=bf_ref)
+    reg._add(arrayed_bf)
 
     val = 0x235
     reg.value = val
@@ -57,10 +58,10 @@ def test_reg_with_arrayed_bf_ref():
 def test_array_bf_serialization():
     reg = r_map.Register(name='a_reg', local_address=0)
     bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0)
-    bf = r_map.BitField(name='a_bf', width=1, parent=bf_ref)
+    bf = r_map.BitField(name='a_bf', width=1)
+    bf_ref._add(bf)
 
     arrayed_bf = r_map.ArrayedNode(
-            parent=reg,
             name='irq_[n]',
             start_index=0,
             incr_index=1,
@@ -69,6 +70,7 @@ def test_array_bf_serialization():
             increment=0x1,
             base_val=0,
             base_node=bf_ref)
+    reg._add(arrayed_bf)
 
     reg.value = 0x12
     assert reg.value == 0x12
@@ -87,26 +89,26 @@ def test_array_bf_serialization():
         assert arrayed_bf[i].value == val&(1<<i)
 
 
-#def test_copied_and_aliased_bitfield(bf):
-#    """Ensure that copies can be made of bitfields without having them become
-#    aliases
-#    """
-#    bf1_ref = r_map.BitFieldRef(name='bf1_ref', reg_offset=0, slice_width=0)
-#    bf1_ref._add(bf)
-#    for _ in range(10):
-#        copy = bf1_ref._copy(deep_copy=True)
-#        assert not copy._alias, "BitFieldRef copy is an alias but it shouldn't be"
-#    assert len(bf._references) == 1, "BitField has multiple references but it shouldn't"
-#
-#def test_automatic_alias(bf):
-#    """Ensure that adding a bitfield to a bitfieldref automatically turns
-#    bitfieldref into an alias
-#    """
-#    bf1_ref = r_map.BitFieldRef(name='bf1_ref', reg_offset=0, slice_width=0)
-#    bf1_ref_copy = r_map.BitFieldRef(name='bf1_ref_copy', reg_offset=0, slice_width=0)
-#    bf1_ref._add(bf)
-#    bf1_ref_copy._add(bf)
-#    assert bf1_ref_copy._alias, "bf1_ref_copy should be an alias but isn't"
+def test_copied_and_aliased_bitfield(bf):
+    """Ensure that copies can be made of bitfields without having them become
+    aliases
+    """
+    bf1_ref = r_map.BitFieldRef(name='bf1_ref', reg_offset=0, slice_width=0)
+    bf1_ref._add(bf)
+    for _ in range(10):
+        copy = bf1_ref._copy(deep_copy=True)
+        assert not copy._alias, "BitFieldRef copy is an alias but it shouldn't be"
+    assert len(bf._references) == 1, "BitField has multiple references but it shouldn't"
+
+def test_automatic_alias(bf):
+    """Ensure that adding a bitfield to a bitfieldref automatically turns
+    bitfieldref into an alias
+    """
+    bf1_ref = r_map.BitFieldRef(name='bf1_ref', reg_offset=0, slice_width=0)
+    bf1_ref_copy = r_map.BitFieldRef(name='bf1_ref_copy', reg_offset=0, slice_width=0)
+    bf1_ref._add(bf)
+    bf1_ref_copy._add(bf)
+    assert bf1_ref_copy._alias, "bf1_ref_copy should be an alias but isn't"
 
 def test_spanned_bitfield_deep_copy(bf):
     """Ensure that deep copying a node maintains the integrity of spanned

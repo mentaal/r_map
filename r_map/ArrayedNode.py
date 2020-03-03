@@ -108,7 +108,6 @@ class ArrayedNode(Node):
                 base_node = self.base_node
 
             inst = base_node._copy(
-                    parent=self,
                     name=instance_name,
                     _add_ref=False,
                     descr=sub(string=self.descr or ''),

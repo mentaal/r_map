@@ -84,7 +84,8 @@ def test_deep_copy(basic_data):
     root = basic_data._copy()
 
     r_map1 = root.r_map1
-    r_map2 = r_map1._copy(parent=root, local_address=0x20000000)
+    r_map2 = r_map1._copy(local_address=0x20000000)
+    root._add(r_map2)
 
     assert r_map1.name == r_map2.name
     assert r_map1.address != r_map2.address

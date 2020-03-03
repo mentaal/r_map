@@ -45,7 +45,7 @@ def convert_to_fixed_node(item, recurse=True):
 def elaborate_nodes(item, recurse=True):
     for c in list(item):
         if isinstance(c, ArrayedNode):
-            c.parent = None
+            c.parent._remove(c)
             for instance in list(c):
                 #we want standalone copies
                 instance._ref = None

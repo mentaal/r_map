@@ -13,7 +13,7 @@ def get_bf(parent=None):
     return bf
 
 def get_reg(parent=None, name='reg1'):
-    reg = r_map.Register(parent=parent, name=name, width=28, local_address=0)
+    reg = r_map.Register(name=name, width=28, local_address=0)
     if parent:
         parent._add(reg)
     bf1 = r_map.BitField(name='bf1', width=5, reset_val=0x15)

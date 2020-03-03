@@ -18,11 +18,13 @@ def get_data():
     #perform registration
     root = Node(name='root')
     for map_incr, rmap_name in enumerate(get_names(amount = randint(20, 50))):
-        block = RegisterMap(name=rmap_name, parent=root,
+        block = RegisterMap(name=rmap_name,
                 local_address =0x40000000 + 0x1000*map_incr)
+        root._add(block)
         for reg_incr, reg_name in enumerate(get_names(
                                                 amount = randint(10, 100))):
-            reg = Register(name=reg_name, parent=block, local_address = 0x4*reg_incr)
+            reg = Register(name=reg_name, local_address = 0x4*reg_incr)
+            block._add(reg)
             avail_width = 32
             current_position = 0
             for bf_incr, bf_name in enumerate(get_names(
@@ -32,20 +34,26 @@ def get_data():
                 bf_width = randint(1, 33)
                 if avail_width < bf_width:
                     bf_width = avail_width
-                bf_ref = BitFieldRef(name=bf_name, parent=reg,
+                bf_ref = BitFieldRef(name=bf_name,
                         slice_width=bf_width, reg_offset=current_position)
-                bf = BitField(name=bf_name, parent=bf_ref, width=bf_width,
+                reg._add(bf_ref)
+                bf = BitField(name=bf_name, width=bf_width,
                             access=get_access()[0])
+                bf_ref._add(bf)
                 for value, enum_name in enumerate(get_names(amount=randint(1,4))):
-                            Enumeration(parent=bf, name=enum_name, value=value)
+                    e = Enumeration(name=enum_name, value=value)
+                    bf._add(e)
                 current_position += bf_width
                 avail_width -= bf_width
 
 
 
-    spi = RegisterMap(name='spi', parent=root, descr='A registermap defining the SPI block',
+    spi = RegisterMap(name='spi', descr='A registermap defining the SPI block',
             local_address=0x40000000)
-    cfgs = [Register(name=f'cfg{i}', parent=spi, local_address=i*4) for i in range(randint(10, 32))]
+    root._add(spi)
+    cfgs = [Register(name=f'cfg{i}', local_address=i*4) for i in range(randint(10, 32))]
+    for c in cfgs:
+        spi._add(c)
 
     def get_field(parent):
         remaining_width = 32
@@ -54,11 +62,14 @@ def get_data():
         while remaining_width:
             new_width = randint(1, remaining_width)
             bf_name = f'bf{field_index}'
-            bf_ref = BitFieldRef(parent=parent,name=bf_name, slice_width=new_width,
+            bf_ref = BitFieldRef(name=bf_name, slice_width=new_width,
                         reg_offset=current_position)
-            yield  BitField(name=bf_name,
-                    parent=bf_ref, width = new_width,
+            parent._add(bf_ref)
+
+            bf = BitField(name=bf_name, width = new_width,
                     reset_val=randint(0, (1<<new_width)-1))
+            bf_ref._add(bf)
+            yield bf
             if randint(0,100) > 60:
                 break
 
@@ -71,9 +82,12 @@ def get_data():
         available_width = 32
         bfs = [f for f in get_field(cfg)]
         if bfs:
-            enum = Enumeration(name='spi_enabled', value=1, parent=bfs[0])
-            enum2 = Enumeration(name='spi_disabled', value=0, parent=bfs[0])
-    dodgy = RegisterMap(name='name', parent=root, descr='A dodgily named registermap!',
+            enum = Enumeration(name='spi_enabled', value=1)
+            bfs[0]._add(enum)
+            enum2 = Enumeration(name='spi_disabled', value=0)
+            bfs[0]._add(enum2)
+    dodgy = RegisterMap(name='name', descr='A dodgily named registermap!',
             local_address=0x50000000)
+    root._add(dodgy)
 
     return root

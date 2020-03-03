@@ -23,7 +23,7 @@ def data():
     root._block_write_func = block_write_func
     return root
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def basic_data():
     return get_basic_data()
 

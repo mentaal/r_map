@@ -21,7 +21,6 @@ def test_arrayed_register_map(reg):
     root = r_map.AddressedNode(name='root', local_address=0)
     arrayed_reg = r_map.ArrayedNode(
             name='TX_FIFO[m]',
-            parent=root,
             start_index=0,
             incr_index=1,
             array_letter='m',
@@ -29,6 +28,7 @@ def test_arrayed_register_map(reg):
             end_index=4,
             increment=0x4,
             base_val=0)
+    root._add(arrayed_reg)
 
 
     arrayed_reg.base_node=reg._copy(local_address=0x10)

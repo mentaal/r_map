@@ -27,14 +27,17 @@ def test_dump_enumeration():
     enum1 = r_map.Enumeration(name='enum1', value=1)
     dct = r_map.dump(enum1)
     print(dct)
-    assert dct['name'] == 'enum1'
+    entry = dct[dct['root']]
+    assert entry['name'] == 'enum1'
 
 def test_dump_enumeration_tree():
     "test turning a tree of nodes into a tree of dicts"
     root = r_map.Node(name='root')
-    enum1 = r_map.Enumeration(name='enum1', parent=root, value=1)
-    enum2 = enum1._copy(parent=root, name='enum2', alias=False, deep_copy=True)
+    enum1 = r_map.Enumeration(name='enum1', value=1)
+    enum2 = enum1._copy(name='enum2', alias=False, deep_copy=True)
+
     for e in enum1,enum2:
+        root._add(e)
         print(repr(e))
     assert enum1 is not enum2
     assert enum2 in root
@@ -64,9 +67,10 @@ def test_enumeration_to_json():
 def test_enumeration_copy_to_json():
     "test a deepcopy of an enumeration to json"
     root = r_map.Node(name='root')
-    enum1 = r_map.Enumeration(name='enum1', parent=root, value=1)
-    enum2 = enum1._copy(parent=root, name='enum2', alias=False, deep_copy=True)
+    enum1 = r_map.Enumeration(name='enum1', value=1)
+    enum2 = enum1._copy(name='enum2', alias=False, deep_copy=True)
     for e in enum1,enum2:
+        root._add(e)
         print(repr(e))
     assert enum1 is not enum2
     assert enum2 in root

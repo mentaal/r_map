@@ -1,6 +1,7 @@
 import random
 from operator import or_
 from functools import reduce, partial
+from pprint import PrettyPrinter
 import r_map
 
 rand_int = partial(random.randint, 0, 0xFFFFFFFF)
@@ -33,7 +34,8 @@ def test_reg_copy(reg):
     reg1 = reg
 
     print(f"reg1.bf1_ref.bf1: {reg1.bf1_ref.bf1!r}")
-    reg2 = reg1._copy(parent=root, name='reg2')
+    reg2 = reg1._copy(name='reg2')
+    root._add(reg2)
     print("Children in reg2:")
     for c in reg2:
         print(repr(c))
@@ -48,7 +50,8 @@ def test_reg_alias(reg):
     reg1 = reg
 
     print(f"reg1.bf1_ref.bf1: {reg1.bf1_ref.bf1!r}")
-    reg2 = reg1._copy(parent=root, name='reg2', alias=True)
+    reg2 = reg1._copy(name='reg2', alias=True)
+    root._add(reg2)
     print("Children in reg2:")
     for c in reg2:
         print(repr(c))
@@ -59,7 +62,7 @@ def test_reg_alias(reg):
 def test_install_bitfield(reg, bf):
     """Check that children of registers need to be of type BitFieldRef and not
     BitField"""
-    bf.parent = reg
+    reg._add(bf)
     assert bf.parent == reg
     errors = list(reg.validate())
     assert len(errors) == 1
@@ -119,11 +122,12 @@ def test_arrayed_ref_register(reg):
     root = r_map.Node(name='root')
 
     reg = r_map.Register(name='a_reg', local_address=0)
-    bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0, parent=reg)
-    bf = r_map.BitField(name='a_bf', width=8, parent=bf_ref)
+    bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0)
+    reg._add(bf_ref)
+    bf = r_map.BitField(name='a_bf', width=8)
+    bf_ref._add(bf)
 
     arrayed_reg = r_map.ArrayedNode(
-            parent=root,
             name='TX_FIFO[nn]_[n]',
             start_index=0,
             incr_index=4,
@@ -132,6 +136,7 @@ def test_arrayed_ref_register(reg):
             increment=0x4,
             base_val=0x100,
             base_node=reg)
+    root._add(arrayed_reg)
 
     arrayed_reg_2 = arrayed_reg._copy(alias=True, name='TX_FIFO2[nn]_[n]')
     print(f"parse_specs: ", arrayed_reg_2._parse_specs)
@@ -154,11 +159,12 @@ def test_arrayed_ref_register_serialized(reg):
     root = r_map.Node(name='root')
 
     reg = r_map.Register(name='a_reg', local_address=0)
-    bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0, parent=reg)
-    bf = r_map.BitField(name='a_bf', width=8, parent=bf_ref)
+    bf_ref = r_map.BitFieldRef(name='a_bf_ref', reg_offset=0)
+    reg._add(bf_ref)
+    bf = r_map.BitField(name='a_bf', width=8)
+    bf_ref._add(bf)
 
     arrayed_reg = r_map.ArrayedNode(
-            parent=root,
             name='TX_FIFO[nn]_[n]',
             start_index=0,
             incr_index=4,
@@ -167,10 +173,11 @@ def test_arrayed_ref_register_serialized(reg):
             increment=0x4,
             base_val=0x100,
             base_node=reg)
+    root._add(arrayed_reg)
 
     arrayed_reg_2 = arrayed_reg._copy(alias=True,
-                                      name='TX_FIFO2[nn]_[n]',
-                                      parent=root)
+                                      name='TX_FIFO2[nn]_[n]')
+    root._add(arrayed_reg_2)
 
     r1 = arrayed_reg[4]
     r1.value = 0x12
@@ -181,12 +188,14 @@ def test_arrayed_ref_register_serialized(reg):
     assert r2.value == 0x23
 
     r1_copy = arrayed_reg_2[4]
+    assert r1_copy is root['TX_FIFO2'][4]
     assert r1_copy.value == 0x12
     r2_copy = arrayed_reg_2[8]
     assert r2_copy.value == 0x23
 
 
     primitive = r_map.dump(root)
+    #PrettyPrinter(indent=4).pprint(primitive)
     root2 = r_map.load(primitive)
 
     arrayed_reg_copy = root2['TX_FIFO']

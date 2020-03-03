@@ -27,9 +27,11 @@ def dump(node):
 def _dump(node, objs:dict):
     """Return a dictionary representing this object.
     """
-    if node.uuid in objs:
-        return
     my_uuid = node.uuid
+    if my_uuid == None:
+        raise ValueError(f"null UUID not allowed for node: {node}")
+    if my_uuid in objs:
+        return node.uuid
     objs[my_uuid] = None #placeholder to prevent recursive calls serializing me
     dct = {n:getattr(node,n) for n in node._nb_attrs}
     dct.pop('uuid')
@@ -45,12 +47,15 @@ def _dump(node, objs:dict):
                 ref_val = getattr(ref, k)
                 if dct_val == ref_val:
                     dct.pop(k)
+        if isinstance(ref, r_map.ArrayedNode):
+            dct['name'] = node._full_name
         objs[node.uuid] = dct
         _dump(ref, objs)
     elif isinstance(node, r_map.ArrayedNode):
         base_node = dct.pop('base_node')
         if base_node:
             dct['base_node'] = _dump(base_node, objs)
+        dct['name'] = node._full_name
     elif len(node):
         dct['children'] = [_dump(c, objs) for c in node]
 
@@ -84,6 +89,7 @@ def _load(my_uuid:str, dct:dict, already_loaded:dict) -> Node:
     elif T:
         vals = {k:v for k,v in entry.items() if k in T._nb_attrs
                                              and v is not None}
+        vals['uuid'] = my_uuid
 
         if issubclass(T, r_map.ArrayedNode):
             vals['base_node'] = _load(vals['base_node'], dct, already_loaded)
