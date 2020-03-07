@@ -50,7 +50,7 @@ def test_reg_alias(reg):
     reg1 = reg
 
     print(f"reg1.bf1_ref.bf1: {reg1.bf1_ref.bf1!r}")
-    reg2 = reg1._copy(name='reg2', alias=True)
+    reg2 = reg1._copy(name='reg2', new_instance=True, new_alias=True)
     root._add(reg2)
     print("Children in reg2:")
     for c in reg2:
@@ -83,7 +83,7 @@ def test_iterate_over_reg(reg):
 
 def test_serialize_reg(reg):
     root = r_map.Node(name='root')
-    reg_copy = reg._copy(name=reg.name+'_copy', alias=True)
+    reg_copy = reg._copy(name=reg.name+'_copy', new_instance=True, new_alias=True)
     assert reg_copy.bf1_ref.bf1 is reg.bf1_ref.bf1
     assert reg.bf1_ref.reg_offset == 0
     root._add(reg)
@@ -138,7 +138,7 @@ def test_arrayed_ref_register(reg):
             base_node=reg)
     root._add(arrayed_reg)
 
-    arrayed_reg_2 = arrayed_reg._copy(alias=True, name='TX_FIFO2[nn]_[n]')
+    arrayed_reg_2 = arrayed_reg._copy(new_instance=True, new_alias=True, name='TX_FIFO2[nn]_[n]')
     print(f"parse_specs: ", arrayed_reg_2._parse_specs)
 
     r1 = arrayed_reg[4]
@@ -175,7 +175,7 @@ def test_arrayed_ref_register_serialized(reg):
             base_node=reg)
     root._add(arrayed_reg)
 
-    arrayed_reg_2 = arrayed_reg._copy(alias=True,
+    arrayed_reg_2 = arrayed_reg._copy(new_instance=True, new_alias=True,
                                       name='TX_FIFO2[nn]_[n]')
     root._add(arrayed_reg_2)
 

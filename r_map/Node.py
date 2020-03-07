@@ -55,9 +55,9 @@ class Node(metaclass=NodeMeta):
             descr(str)     : A description for the node (usually shorter than doc)
             doc(str)       : A documentation string for the node
             uuid(str)      : A Universal Identifier
-            _ref(Node)     : Either a Node or None
-            _alias(bool)   : Indicating if the node is an instance (False) or
-                             alias (True)
+            _ref(Node): If not None, the reference to the Node that this
+                              node is an instance of
+            _alias(bool): If True, this node is an alias for the reference node
         '''
         for key in self._nb_attrs:
             setattr(self, key, kwargs.get(key, None))
@@ -101,9 +101,6 @@ class Node(metaclass=NodeMeta):
         else:
             raise ValueError("Expected argument to be of type Node or one of "
                              "its descendents")
-
-    def __str__(self):
-        return f'{type(self).__name__}: {self.name}'
 
     def __contains__(self, item):
         if isinstance(item, Node):
@@ -156,6 +153,9 @@ class Node(metaclass=NodeMeta):
     def __len__(self):
         return len(self._children)
 
+    def __str__(self):
+        return f'{type(self).__name__}: {self.name}'
+
     def __repr__(self):
         items = ((k,getattr(self, k)) for k in self._nb_attrs)
         #don't want these to be in the repr
@@ -166,23 +166,21 @@ class Node(metaclass=NodeMeta):
         arg_strings = (f'{k}={v!r}' for (k,v) in sorted(me.items(), key=itemgetter(0)))
         return f"{type(self).__name__}({','.join(arg_strings)})"
 
-    def _copy(self, *, alias:bool=False, deep_copy:bool=True,
-              _add_ref:bool=True, _context:dict=None, **kwargs):
+    def _copy(self, *, new_instance:bool=False, new_alias:bool=False,
+              _context:dict=None, _deep_copy:bool=True, **kwargs):
         """Create a deep copy of this object
-        :param alias: Indicate if the copy should be an alias. This means that
-                      any children of the new copy which happens to be bitfields
-                      won't be copies but references. This attribute is passed
-                      down through the node hierarchy and is used by BitFieldRef
-                      instances to determine if a copy of its Bitfield child
-                      should be made.
-        :param deep_copy: Create a deep copy of this instance.
-        :param _add_ref: Indicate if a reference to to the object being copied
-                         should be added to the newly created copy
+
+        :param new_instance: Indicate if the copy should be considered an
+            instance of this node. When a node is an instance of another, it
+            will have a `_ref` attribute pointing to it.
+        :param new_alias: Indicate if the copy should be an alias of this node.
+              If True, the copy will have an `_alias` boolean set to True.
         :param _context: A dictionary holding mapping of original objects to
-                         newly created copies. This is essential for ensuring
-                         that when the same child bitfield is being copied from
-                         multiple parent bitfield references, only a single
-                         newly created copy will be used
+             newly created copies. This is essential for ensuring that when the
+             same child bitfield is being copied from multiple parent bitfield
+             references, only a single newly created copy will be used
+        :param _deep_copy: If True, copy children too. Mainly used in
+                           BitFieldRef override.
         :returns: The newly created copy
         """
         if _context is None:
@@ -190,24 +188,27 @@ class Node(metaclass=NodeMeta):
         elif self in _context:
             return _context[self] # I've already been copied
 
+
         existing_items = {k:getattr(self, k) for k in self._nb_attrs}
         #It's a copy so shouldn't have the same uuid
         existing_items.pop('uuid', None)
         existing_items.update(kwargs)
-        if _add_ref:
+
+        if new_instance:
             existing_items['_ref'] = self
-        existing_items['_alias'] = alias
+        elif not ('_ref' in kwargs and kwargs['_ref']) and self._ref:
+            existing_items['_ref'] = self._ref._copy(_context=_context)
+
+        if new_alias:
+            existing_items['_alias'] = True
+
         new_obj = type(self)(**existing_items)
+
         _context[self] = new_obj
 
-        if deep_copy:
+        if _deep_copy:
             for obj in self:
-                if obj in _context: #it's already been replaced
-                    new_obj._add(_context[obj])
-                else:
-                    new_child_obj = obj._copy(alias=alias, _add_ref=_add_ref,
-                                              _context=_context)
-                    new_obj._add(new_child_obj)
+                new_obj._add(obj._copy(new_alias=new_alias, _context=_context))
 
         return new_obj
 

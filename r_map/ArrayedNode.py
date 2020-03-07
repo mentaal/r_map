@@ -109,10 +109,9 @@ class ArrayedNode(Node):
 
             inst = base_node._copy(
                     name=instance_name,
-                    _add_ref=False,
                     descr=sub(string=self.descr or ''),
                     doc=sub(string=self.doc or ''),
-                    alias=self._alias,
+                    new_alias=self._alias,
                     **kwargs)
             self._add(inst)
         return inst
@@ -139,7 +138,7 @@ class ArrayedNode(Node):
         else:
             raise NotImplemented
 
-    def _copy(self, *, deep_copy=True, alias=False, **kwargs):
+    def _copy(self, *, _deep_copy=True, new_alias=False, **kwargs):
         """Create a deep copy of this object
         Implementation within this class is almost the same as that from Node.
         The difference is that children of this object are dynamically generated
@@ -147,7 +146,7 @@ class ArrayedNode(Node):
         """
         #always pass deep_copy=False here because we never want to copy children
         #in an ArrayedNode
-        new_obj = super()._copy(alias=alias, deep_copy=False, **kwargs)
+        new_obj = super()._copy(new_alias=new_alias, _deep_copy=False, **kwargs)
         if new_obj.base_node == None:
             new_obj.base_node = self.base_node
         return new_obj

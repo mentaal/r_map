@@ -51,13 +51,17 @@ def full_map():
     bf1_ref = r_map.BitFieldRef(name='bf1', reg_offset=0, slice_width=4,
                                 field_offset=0)
     bf1_ref._add(bf1)
-    bf2_ref = bf1_ref._copy(name='bf2', reg_offset=4, slice_width=2,
-                            field_offset=4, alias=True)
+
+    bf2_ref = bf1_ref._copy(name='bf2', new_instance=True)
+    bf3_ref = bf1_ref._copy(name='bf3', reg_offset=4, slice_width=2,
+                            field_offset=4, new_instance=True, new_alias=True)
     reg1 = r_map.Register(name='reg1', local_address=0x1000)
     reg1._add(bf1_ref)
     reg1._add(bf2_ref)
-    reg2 = reg1._copy(name='reg2', alias=True)
-    reg3 = reg1._copy(name='reg3')
+    reg1._add(bf3_ref)
+    #breakpoint()
+    reg2 = reg1._copy(name='reg2', new_instance=True)
+    reg3 = reg1._copy(name='reg3', new_alias=True, new_instance=True)
 
     rm = r_map.RegisterMap(name='rm', local_address=0)
     rm._add(reg1)

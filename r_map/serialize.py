@@ -60,7 +60,7 @@ def _dump(node, objs:dict):
         dct['children'] = [_dump(c, objs) for c in node]
 
     #no need to add nulls
-    objs[my_uuid] = {k:v for k,v in dct.items() if v is not None}
+    objs[my_uuid] = {k:v for k,v in dct.items() if (v is not None and v is not False)}
     return my_uuid
 
 def load(dct:dict) -> Node:
@@ -81,11 +81,14 @@ def _load(my_uuid:str, dct:dict, already_loaded:dict) -> Node:
     T = getattr(r_map, type_name) if type_name else None
     ref_uuid = entry.get('_ref')
     if ref_uuid:
-        ref_obj = already_loaded.get(ref_uuid, _load(ref_uuid, dct, already_loaded))
+        ref_obj = already_loaded.get(ref_uuid, None)
+        if ref_obj is None:
+            ref_obj = _load(ref_uuid, dct, already_loaded)
         vals = {k:v for k,v in entry.items() if k in ref_obj._nb_attrs
                                              and v is not None}
-        obj = ref_obj._copy(alias=vals.pop('_alias', False),
-                            **vals)
+        vals['uuid'] = my_uuid
+        vals['_ref'] = ref_obj
+        obj = ref_obj._copy(new_alias=vals.pop('_alias', False), **vals)
     elif T:
         vals = {k:v for k,v in entry.items() if k in T._nb_attrs
                                              and v is not None}
@@ -98,8 +101,8 @@ def _load(my_uuid:str, dct:dict, already_loaded:dict) -> Node:
         if children:
             for child_entry in children:
                 child_obj = _load(child_entry,
-                                 dct,
-                                 already_loaded)
+                                  dct,
+                                  already_loaded)
                 obj._add(child_obj)
     else:
         raise ValueError(f"Could not _load data: {entry}")

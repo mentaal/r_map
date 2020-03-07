@@ -34,7 +34,7 @@ def test_dump_enumeration_tree():
     "test turning a tree of nodes into a tree of dicts"
     root = r_map.Node(name='root')
     enum1 = r_map.Enumeration(name='enum1', value=1)
-    enum2 = enum1._copy(name='enum2', alias=False, deep_copy=True)
+    enum2 = enum1._copy(name='enum2')
 
     for e in enum1,enum2:
         root._add(e)
@@ -68,7 +68,7 @@ def test_enumeration_copy_to_json():
     "test a deepcopy of an enumeration to json"
     root = r_map.Node(name='root')
     enum1 = r_map.Enumeration(name='enum1', value=1)
-    enum2 = enum1._copy(name='enum2', alias=False, deep_copy=True)
+    enum2 = enum1._copy(name='enum2')
     for e in enum1,enum2:
         root._add(e)
         print(repr(e))

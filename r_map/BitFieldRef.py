@@ -51,6 +51,8 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
             self.__slice_width_setup(bf.width)
 
         self._bf = bf
+        if bf.parent == None:
+            bf._parent = self
         if not hasattr(bf, '_references'):
             bf._references = set()
         bf._references.add(self)
@@ -82,24 +84,29 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
 
         bf.value = old_bf_value | (new_value << self.field_offset)
 
-    def _copy(self, *, alias=False, _context=None, **kwargs):
+    def _copy(self, *, new_instance:bool=False, new_alias:bool=False,
+              _deep_copy=True, _context=None, **kwargs):
         """Create a deep copy of this object
+
         Implementation within this class is almost the same as that from Node.
         The difference is that if this object is an alias, do not instantiate
         copies of children. Merely add existing bitfield as this object's
-        bitfield and inject self as a reference"""
+        bitfield and inject self as a reference
 
-        #breakpoint()
+        """
+
         if _context is None:
             _context = {}
 
-        if alias:
-            kwargs['deep_copy'] = False
+        deep_copy = not (new_alias or self._alias)
+        new_obj = super()._copy(new_alias=new_alias, new_instance=new_instance,
+                                _context=_context, _deep_copy=deep_copy, **kwargs)
 
-        new_obj = super()._copy(alias=alias, _context=_context, **kwargs)
-
-        if alias:
-            new_obj._add(self.bf)
+        if not deep_copy:
+            if new_obj._ref:
+                new_obj._add(new_obj._ref.bf)
+            else:
+                new_obj._add(self.bf)
 
         return new_obj
 
@@ -113,9 +120,4 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
                 yield ValidationError(
                         self,
                         "Slice width is larger than bitfield's width")
-
-
-
-
-
 
