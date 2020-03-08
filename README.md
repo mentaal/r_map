@@ -60,36 +60,123 @@ partial view to a bitfield. It's therefore possible for multiple registers to
 have access to the same bitfield. Support for this level is complexity is baked
 into the data structre and modelled with a class: BitFieldRef.
 
-A full register map tree will look like this:
+A full register map tree is serialized using a common dictionary with nodes
+referencing others via their uuids.
 
-    Root (Node)
-        rmap1 (RegisterMap)
-            reg1 (Register)
-                bitfield1_ref (BitFieldRef)
-                    bitfield1 (BitField)
-                        enum1 (Enumeration)
-                        enum2 (Enumeration)
-                        ...
-                    bitfield2 (BitField)
-                    ...
-                bitfield2_ref (BitFieldRef)
-                ....
-            reg2 (Register)
-            ....
-        rmap2 (RegisterMap)
-        ....
+For example:
 
-As in the above tree, it is possible that bitfield2_ref contains a reference to
-bitfield1. Therefore reg1 and reg2 could both access the same bitfield.
+    "1b99635555e647638f8a1ff38a1e3cf1": {
+        "name": "root",
+        "type": "Node",
+        "children": [
+            "3e2f9ba277e44050b52b5111fd814008"
+        ]
+    },
+    "3e2f9ba277e44050b52b5111fd814008": {
+        "name": "r_map1",
+        "descr": "An example register map containing r
+        "local_address": 268435456,
+        "type": "RegisterMap",
+        "children": [
+            "c897cf71021449bdbdc819e7255fcab7",
+            "569715f765f14ba09313796ee98b6db6"
+        ]
+    },
+    "c897cf71021449bdbdc819e7255fcab7": {
+        "local_address": 0,
+        "name": "reg1",
+        "width": 32,
+        "type": "Register",
+        "children": [
+            "8cded8916e014bb3ab621e327f9c0ae8"
+        ]
+    },
+    "8cded8916e014bb3ab621e327f9c0ae8": {
+        "reg_offset": 8,
+        "field_offset": 7,
+        "name": "bf1_ref",
+        "slice_width": 6,
+        "type": "BitFieldRef",
+        "children": [
+            "b138d3d5335442479f25ec4d57859cda"
+        ]
+    },
+    "b138d3d5335442479f25ec4d57859cda": {
+        "access": "RW",
+        "name": "bf1",
+        "reset_val": 74565,
+        "width": 20,
+        "doc": "Some documentation to describe the bit
+        "type": "BitField",
+        "children": [
+            "ba75ebd0924a46f29f0dd1726fd5fb5f",
+            "36b5d3a221e6400bba2d76a303dac2c2"
+        ]
+    },
+    "ba75ebd0924a46f29f0dd1726fd5fb5f": {
+        "name": "use_auto_inc",
+        "value": 20,
+        "type": "Enumeration"
+    },
+    "36b5d3a221e6400bba2d76a303dac2c2": {
+        "name": "use_auto_dec",
+        "value": 10,
+        "type": "Enumeration"
+    },
+    "569715f765f14ba09313796ee98b6db6": {
+        "local_address": 4,
+        "name": "reg2",
+        "width": 32,
+        "type": "Register",
+        "children": [
+            "14b8d11fea244200a6d0efee16d740f7",
+            "37a9c221ab77446aafe9f74ec14c78c6",
+            "6f695b3dbdd74cb3abaddf82c9594e4b"
+        ]
+    },
+    "14b8d11fea244200a6d0efee16d740f7": {
+        "_alias": true,
+        "reg_offset": 0,
+        "field_offset": 0,
+        "name": "bf4_ref",
+        "slice_width": 2,
+        "_ref": "6f695b3dbdd74cb3abaddf82c9594e4b",
+        "type": "BitFieldRef"
+    },
+    "6f695b3dbdd74cb3abaddf82c9594e4b": {
+        "reg_offset": 5,
+        "field_offset": 2,
+        "name": "bf3_ref",
+        "slice_width": 5,
+        "type": "BitFieldRef",
+        "children": [
+            "28c6a9c6929a4ad2baabc18751ec21d3"
+        ]
+    },
+    "28c6a9c6929a4ad2baabc18751ec21d3": {
+        "access": "R",
+        "name": "bf2",
+        "reset_val": 26505,
+        "width": 20,
+        "type": "BitField"
+    },
+    "37a9c221ab77446aafe9f74ec14c78c6": {
+        "_alias": true,
+        "reg_offset": 4,
+        "field_offset": 3,
+        "name": "bf2_ref",
+        "slice_width": 4,
+        "_ref": "8cded8916e014bb3ab621e327f9c0ae8",
+        "type": "BitFieldRef"
+    },
+    "root": "1b99635555e647638f8a1ff38a1e3cf1"
+}
 
-Each bitfield also contains a `references` set which can be used to access all
-of the BitFieldRef instances which point to it.
-
-An example of where this would be quite useful is if the user extended the
-BitField class to include a write method to write the BitField's value to a
-piece of hardware. The bitfield is only accessible via the Registers which
-reference it so the write function could then access the registers through the
-BitFieldRef instances' parent attribute.
+The `_ref` attribute facilitates modeling that one node can be an instance of
+another. Which saves duplication of common information within the serialized
+tree. The `_alias` attribute indicates that an instance can be an alias of
+another. This simply means that the new instance's bitfields will be shared with
+the source node.
 
 ## r_map classes
 
