@@ -98,11 +98,9 @@ class BitField(UnsignedValueNodeMixin, Node):
         self.value = val #in case they're different
         if always_write or not same_value:
             for r in parent_regs:
-                print(f"Writing parent register: {r}")
                 r.write()
 
     def read(self) -> int:
         for r in self._get_parent_regs():
-            print(f"Reading parent register: {r}")
             r.read()
         return self.value
