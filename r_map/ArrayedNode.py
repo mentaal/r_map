@@ -146,7 +146,9 @@ class ArrayedNode(Node):
         """
         #always pass deep_copy=False here because we never want to copy children
         #in an ArrayedNode
-        new_obj = super()._copy(new_alias=new_alias, _deep_copy=False, **kwargs)
+        name_update = kwargs.pop('name', self._full_name)
+        new_obj = super()._copy(new_alias=new_alias, _deep_copy=False,
+                name=name_update, **kwargs)
         if new_obj.base_node == None:
             new_obj.base_node = self.base_node
         return new_obj
