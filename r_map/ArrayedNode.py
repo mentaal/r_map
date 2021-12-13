@@ -41,6 +41,10 @@ class ArrayedNode(Node):
         if self._ref:
             self.base_node = self._ref.base_node
 
+        if not self._parse_specs:
+            raise ValueError('could not obtain array indexing offsets from '
+                    f'supplied name. For: {self!s}')
+
     @staticmethod
     def _around_spans(s, spans):
         """Given a string and spans, return the string around the spans"""
@@ -62,6 +66,13 @@ class ArrayedNode(Node):
             return name == self._ugly_name
         else:
             return super().__contains__(item)
+
+    @property
+    def address(self):
+        if self.parent and hasattr(self.parent, 'address'):
+            return self.base_val + self.parent.address #allows for relative addressing
+        else:
+            return self.base_val
 
     @property
     def value(self):
@@ -93,11 +104,21 @@ class ArrayedNode(Node):
         instance_name = sub(string=self._full_name or '')
 
         inst = self._children.get(instance_name)
+        bn = self.base_node
+        bn_is_arrayed = isinstance(bn, r_map.ArrayedNode)
         if not inst:
-            key = 'local_address' if isinstance(self.base_node,
-                                                r_map.AddressedNode) else \
-                   'reg_offset'
-            inc = (index//self.incr_index)*self.increment + self.base_val
+            if isinstance(bn, r_map.AddressedNode):
+                key = 'local_address'
+                inc = (index//self.incr_index)*self.increment
+            elif isinstance(bn, r_map.BitFieldRef):
+                key = 'reg_offset'
+                inc = (index//self.incr_index)*self.increment + self.base_val
+            elif bn_is_arrayed:
+                key = 'base_val'
+                inc = (index//self.incr_index)*self.increment
+            else:
+                raise ValueError(f"Unsupported base node type: {type(bn)} for Arrayed Register: {self}")
+
             kwargs = {key:inc}
 
             #if we're an alias, treat the dynamically created inst from _ref as
@@ -107,12 +128,23 @@ class ArrayedNode(Node):
             else:
                 base_node = self.base_node
 
+            if bn_is_arrayed:
+                name_for_copy = bn._full_name
+            else:
+                name_for_copy = instance_name
+
             inst = base_node._copy(
-                    name=instance_name,
+                    name=name_for_copy,
                     descr=sub(string=self.descr or ''),
                     doc=sub(string=self.doc or ''),
                     new_alias=self._alias,
                     **kwargs)
+
+            if bn_is_arrayed:
+                # update the instance name after it has been created if it's an
+                # arrayed node so we don't mess up it's name handling but still
+                # allow it to have a meaningful name
+                inst.name = instance_name
             self._add(inst)
         return inst
 

@@ -21,7 +21,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='r_map',  # Required
-    version='0.4.0',  # Required
+    version='0.5.0',  # Required
     description='A data structure for working with register map information',  # Required
     long_description=long_description,  # Optional
     long_description_content_type='text/markdown',  # Optional (see note above)

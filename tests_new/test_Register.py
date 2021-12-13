@@ -111,10 +111,10 @@ def test_arrayed_register(reg):
 
     r = arrayed_reg[4]
     assert r.name == 'TX_FIFO04_4'
-    assert r.local_address == 0x104
+    assert r.address == 0x104
     r = arrayed_reg['TX_FIFO08_8']
     assert r.name == 'TX_FIFO08_8'
-    assert r.local_address == 0x108
+    assert r.address == 0x108
 
     assert r.descr == 'TX FIFO register 08'
 
@@ -223,4 +223,30 @@ def test_reg_copy_serialized(reg):
 
     errors = list(reg_copy_2.validate())
     assert len(errors) == 0
+
+def test_nested_arrayed_register(reg):
+    arrayed_map = r_map.ArrayedNode(
+            name='TX_MAP[n]',
+            start_index=0,
+            incr_index=4,
+            descr='TX Register Map [nn]',
+            end_index=8,
+            increment=0x10000,
+            base_val=0x10000)
+
+    arrayed_reg = r_map.ArrayedNode(
+            name='TX_FIFO[n]',
+            start_index=0,
+            incr_index=4,
+            descr='TX FIFO register [nn]',
+            end_index=20*4,
+            increment=0x4,
+            base_val=0x100)
+
+    arrayed_reg.base_node=reg
+    arrayed_map.base_node = arrayed_reg
+
+    for map_ in arrayed_map:
+        for reg in map_:
+            print(f'{reg} -> parent: {reg.parent}')
 
