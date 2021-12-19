@@ -15,3 +15,4 @@ def test_io_reg(data):
     first_reg.write(0x1000)
     print(f"Reg now: {first_reg}")
     first_reg.read()
+

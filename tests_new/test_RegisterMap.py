@@ -45,10 +45,9 @@ def test_arrayed_register_map(reg):
     root2 = r_map.load(prim)
     assert root2.TX_FIFO2.address == 8
 
-
-
-
-
+def test_write_reg_assignment(full_map):
+    full_map.rm.reg1 = 0x1000
+    assert isinstance(full_map.rm.reg1, r_map.Node)
 
 
 

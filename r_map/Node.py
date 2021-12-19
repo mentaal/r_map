@@ -32,10 +32,33 @@ class GetIoFunc:
             raise AttributeError("Descriptor only to be used on instances")
         if instance.parent:
             func = getattr(instance.parent, self.name)
-            setattr(instance, self.name, func)
+            #setattr(instance, self.name, func)
+            instance.__dict__[self.name] = func
             return func
         else:
             raise AttributeError(f"No {self.name} function provided!")
+
+class GetIoExFunc:
+    """Non data descriptor to get a user supplied IO function from a parent node
+    if necessary
+    """
+    def __init__(self, non_ex_func_name):
+        self.non_ex_func_name = non_ex_func_name
+    def __set_name__(self, owner, name):
+        self.name = name
+    def __get__(self, instance, owner):
+        """As this is a non data descriptor, the instance won't ever have a
+        reference to the supplied function. Need to query the parent
+        """
+        if not instance:
+            raise AttributeError("Descriptor only to be used on instances")
+        if instance.parent:
+            func = getattr(instance.parent, self.name)
+            #setattr(instance, self.name, func)
+            instance.__dict__[self.name] = func
+            return func
+        else:
+            return lambda node, *args, **kwargs: getattr(node, self.non_ex_func_name)(node.address, *args, **kwargs)
 
 class Node(metaclass=NodeMeta):
     '''A node in the tree data structure representing the register map'''
@@ -47,6 +70,9 @@ class Node(metaclass=NodeMeta):
     _reg_write_func = GetIoFunc()
     _block_read_func = GetIoFunc()
     _block_write_func = GetIoFunc()
+
+    _reg_read_ex_func = GetIoExFunc('_reg_read_func')
+    _reg_write_ex_func = GetIoExFunc('_reg_write_func')
 
     def __init__(self, **kwargs):
         '''
@@ -74,6 +100,7 @@ class Node(metaclass=NodeMeta):
         unexpecteds = kwargs.keys() - self._nb_attrs
         if unexpecteds:
             raise ValueError("Got unexpected keyword arguments: {}".format('\n'.join(unexpecteds)))
+
 
     @property
     def parent(self):
@@ -123,6 +150,16 @@ class Node(metaclass=NodeMeta):
             return self._children[name]
         except (KeyError, AttributeError) as e:
             raise AttributeError(f"{name} not found")
+
+    def __setattr__(self, key, value):
+        """Used to simply register value assignment"""
+        if '_children' in self.__dict__ and\
+           key in self.__dict__['_children'] and\
+           isinstance(value, int) and\
+           hasattr(self.__dict__['_children'][key], 'value'):
+               getattr(self, key).value = value
+        else:
+            super().__setattr__(key, value)
 
     def __getitem__(self, item):
         return self._children[item]
@@ -183,10 +220,11 @@ class Node(metaclass=NodeMeta):
                            BitFieldRef override.
         :returns: The newly created copy
         """
+        self_id = id(self)
         if _context is None:
             _context = {}
-        elif self in _context:
-            return _context[self] # I've already been copied
+        elif self_id in _context:
+            return _context[self_id] # I've already been copied
 
 
         existing_items = {k:getattr(self, k) for k in self._nb_attrs}
@@ -204,7 +242,7 @@ class Node(metaclass=NodeMeta):
 
         new_obj = type(self)(**existing_items)
 
-        _context[self] = new_obj
+        _context[self_id] = new_obj
 
         if _deep_copy:
             for obj in self:

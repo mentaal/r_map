@@ -209,6 +209,21 @@ def test_arrayed_ref_register_serialized(reg):
     assert r1.value == 0x12
     assert r2.value == 0x23
 
+    #test reflected methods
+    assert r1 == 0x12
+    assert 0x12 == r1
+    assert r1 >= 0x12
+    assert r1 >= 0x11
+    assert 0x11 <= r1
+    assert 0x12 <= r1
+    assert 0x13 > r1
+    assert r1 < 0x13
+    assert r1 < r2
+    assert r1 <= r2
+    assert r2 > r1
+    assert r2 >= r1
+
+
     r1_copy = arrayed_reg_2_copy[4]
     assert r1_copy.value == 0x12
     r2_copy = arrayed_reg_2_copy[8]
@@ -249,4 +264,63 @@ def test_nested_arrayed_register(reg):
     for map_ in arrayed_map:
         for reg in map_:
             print(f'{reg} -> parent: {reg.parent}')
+
+def test_write(reg):
+    written = None
+    def writer(address, value:int):
+        nonlocal written
+        written = value
+
+    reg._reg_write_func = writer
+
+    reg.write(0x12345)
+
+    assert written == 0x12345
+
+def test_write_ex(reg):
+    written = None
+    def writer(reg, value:int):
+        nonlocal written
+        written = value
+
+    reg._reg_write_ex_func = writer
+
+    reg.write(0x12345)
+
+    assert written == 0x12345
+
+def test_read_ex(reg):
+    read_back = None
+    def reader(address):
+        nonlocal read_back
+        read_back = 0x12346
+        return read_back
+
+    reg._reg_read_func = reader
+
+    assert 0x12346 == reg.read()
+
+
+def test_read_ex(reg):
+    read_back = None
+    def reader(reg):
+        nonlocal read_back
+        address = reg.address
+        read_back = 0x12346
+        return read_back
+
+    reg._reg_read_ex_func = reader
+
+    assert 0x12346 == reg.read()
+
+def test_bitfield_shorthand(reg):
+    assert reg.bf1_ref == reg.bf1_ref.bf.reset_val
+    assert reg.bf1_ref >= reg.bf1_ref.bf.reset_val
+    assert reg.bf1_ref > reg.bf1_ref.bf.reset_val - 1
+    assert reg.bf1_ref.bf.reset_val >= reg.bf1_ref
+    assert reg.bf1_ref.bf.reset_val - 1 <= reg.bf1_ref
+    assert reg.bf1_ref.bf.reset_val - 1 <= reg.bf1_ref
+    reg.bf2_ref = reg.bf2_ref.bf.reset_val + 1
+    assert reg.bf2_ref == reg.bf2_ref.bf.reset_val + 1
+
 

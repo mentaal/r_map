@@ -16,7 +16,7 @@ def test_get_data(basic_data):
 
     bf_value = bf.value
     print(f"bf_value == {bf_value:#0x}")
-    for ref in bf._references:
+    for ref in bf._references.values():
         ref_view = (bf_value >> ref.field_offset) & ((1 << ref.slice_width) - 1)
         print(f"ref_view now: {ref_view}")
         ref_view <<= ref.reg_offset

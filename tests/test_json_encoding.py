@@ -26,5 +26,5 @@ def test_decode_from_json(basic_data):
     assert len(bf._references) == 2
 
     #ensure that references are created properly during deserialization process
-    assert bf._references == set([root.r_map1.reg1.bf1_ref, root.r_map1.reg2.bf2_ref])
+    assert bf._references == {id(ref): ref for ref in [root.r_map1.reg1.bf1_ref, root.r_map1.reg2.bf2_ref]}
 

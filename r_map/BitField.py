@@ -76,7 +76,7 @@ class BitField(UnsignedValueNodeMixin, Node):
         if not hasattr(self, '_references'):
             raise ValueError("BitField doesn't have any parents so cannot "
                              "perform an IO")
-        return [bf_ref.parent for bf_ref in self._references]
+        return [bf_ref.parent for bf_ref in self._references.values()]
 
 
     def write(self, val=None, always_write:bool=True):

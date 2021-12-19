@@ -59,7 +59,7 @@ class Register(UnsignedValueNodeMixin, AddressedNode):
                     first = second
 
     def read(self) -> int:
-        val = self._reg_read_func(self.address)
+        val = self._reg_read_ex_func(self)
         self.value = val
         #Intentionally return val here and not self.value
         #User may wish to inspect the value of otherwise reserved or unspecified
@@ -71,8 +71,7 @@ class Register(UnsignedValueNodeMixin, AddressedNode):
             val = self.value
         else:
             self.value = val
-        self._reg_write_func(self.address, val)
-
+        self._reg_write_ex_func(self, val)
 
     def __iter__(self):
         children = list(Node.__iter__(self))
@@ -81,5 +80,58 @@ class Register(UnsignedValueNodeMixin, AddressedNode):
         else:
             return (s for s in sorted(children, key=attrgetter('reg_offset')))
 
+    def __setattr__(self, key, value):
+        """Used to simply register value assignment
+        Behaves similarly to the __setattr__ method defined in Node but with
+        the difference that when the user assignes to a register, like this:
+            reg.bf_ref = 0x5,
+        they most likely mean reg.bf_ref.bf.value so this method does the most
+        intuitive
+        """
+        if '_children' in self.__dict__ and\
+           key in self.__dict__['_children'] and\
+           isinstance(value, int) and\
+           hasattr(self.__dict__['_children'][key], 'bf'):
+               getattr(self, key).bf.value = value
+        else:
+            super().__setattr__(key, value)
 
+    def __eq__(self, other):
+        if isinstance(other, Register):
+            return self.value == other.value
+        elif isinstance(other, int):
+            return self.value == other
+        else:
+            return NotImplemented
 
+    def __gt__(self, other):
+        if isinstance(other, Register):
+            return self.value > other.value
+        elif isinstance(other, int):
+            return self.value > other
+        else:
+            return NotImplemented
+
+    def __lt__(self, other):
+        if isinstance(other, Register):
+            return self.value < other.value
+        elif isinstance(other, int):
+            return self.value < other
+        else:
+            return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, Register):
+            return self.value >= other.value
+        elif isinstance(other, int):
+            return self.value >= other
+        else:
+            return NotImplemented
+
+    def __le__(self, other):
+        if isinstance(other, Register):
+            return self.value <= other.value
+        elif isinstance(other, int):
+            return self.value <= other
+        else:
+            return NotImplemented

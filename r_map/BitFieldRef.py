@@ -40,6 +40,8 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
         return self._bf
 
     def _add(self, bf):
+        bf_id = id(bf)
+        self_id = id(self)
         if isinstance(bf, BitField):
             if bf in self:
                 return #already added
@@ -54,8 +56,8 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
         if bf.parent == None:
             bf._parent = self
         if not hasattr(bf, '_references'):
-            bf._references = set()
-        bf._references.add(self)
+            bf._references = {}
+        bf._references[self_id] = self
         ref_count = len(bf._references)
         if ref_count > 1:
             # this line is a bit confusing an ambiguous. It doesn't intend to
@@ -65,8 +67,8 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
             # use an already created instance
             self._alias = True
             if not self._ref:
-                self._ref = next(iter(bf._references - set([self])))
-
+                first_key = (bf._references.keys() - set([self_id])).pop()
+                self._ref = bf._references[first_key]
     @property
     def reset_val(self):
         return ((self._bf.reset_val >> self.field_offset) & self.mask) << self.reg_offset
@@ -121,3 +123,42 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
                         self,
                         "Slice width is larger than bitfield's width")
 
+    def __eq__(self, other):
+        if isinstance(other, BitFieldRef):
+            return self.value == other.value
+        elif isinstance(other, int):
+            return self.bf.value == other
+        else:
+            return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, BitFieldRef):
+            return self.value > other.value
+        elif isinstance(other, int):
+            return self.bf.value > other
+        else:
+            return NotImplemented
+
+    def __lt__(self, other):
+        if isinstance(other, BitFieldRef):
+            return self.value < other.value
+        elif isinstance(other, int):
+            return self.bf.value < other
+        else:
+            return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, BitFieldRef):
+            return self.value >= other.value
+        elif isinstance(other, int):
+            return self.bf.value >= other
+        else:
+            return NotImplemented
+
+    def __le__(self, other):
+        if isinstance(other, BitFieldRef):
+            return self.value <= other.value
+        elif isinstance(other, int):
+            return self.bf.value <= other
+        else:
+            return NotImplemented
