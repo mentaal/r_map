@@ -3,6 +3,7 @@ from functools import partial, reduce
 from operator import ior
 import r_map
 from .Node import Node
+from .arrayed_node_name_parser import make_parser
 
 class ArrayedNode(Node):
     '''A node that is used to hold an arrayed definition of instances.
@@ -21,29 +22,20 @@ class ArrayedNode(Node):
     def __init__(self, *, name, start_index=0, incr_index=1, end_index=1,
                  increment=1, array_letter='n', **kwargs):
 
+        self._range_val = range(start_index, end_index, incr_index)
+        self.name_gen, self._parse_name = make_parser(self._range_val, array_letter, name)
         index_re = re.compile(rf'\[{array_letter}+\]')
+        self._make_repl_func = lambda i:lambda m:f'{i:0{m.end()-m.start()-2}}'
+        self.index_re = index_re
         _ugly_name, _full_name = index_re.sub('', name), name
         name = _ugly_name.strip('_')
         super().__init__(name=name, start_index=start_index, incr_index=incr_index,
                          end_index=end_index, increment=increment,
                          array_letter=array_letter, **kwargs)
-        self.index_re = index_re
-        self._range_val = range(start_index, end_index, incr_index)
-        self._make_repl_func = lambda i:lambda m:f'{i:0{m.end()-m.start()-2}}'
-        #get a spec for getting the index from an argument name
-        iter_spans = ((i*2, m.span()) for i,m in
-                enumerate(index_re.finditer(_full_name or '')))
-        #subtractions here are to cater for removal of brackets
-        self._parse_specs = [(x[0]-i, x[1]-i-2) for i,x in iter_spans]
         self._full_name = _full_name
-        self._ugly_name = _ugly_name
 
         if self._ref:
             self.base_node = self._ref.base_node
-
-        if not self._parse_specs:
-            raise ValueError('could not obtain array indexing offsets from '
-                    f'supplied name. For: {self!s}')
 
     @staticmethod
     def _around_spans(s, spans):
@@ -60,10 +52,10 @@ class ArrayedNode(Node):
     def __contains__(self, item):
         if isinstance(item, str):
             try:
-                name, index = self._parse_name(item)
+                index = self._parse_name(item)
             except ValueError:
                 return False
-            return name == self._ugly_name
+            return index is not None
         else:
             return super().__contains__(item)
 
@@ -100,8 +92,7 @@ class ArrayedNode(Node):
         if index not in self._range_val:
             raise IndexError(f"Requested item with index: {index} out of range:"
                              f" {self._range_val}")
-        sub = partial(self.index_re.sub, repl=self._make_repl_func(index))
-        instance_name = sub(string=self._full_name or '')
+        instance_name = self.name_gen(index)
 
         inst = self._children.get(instance_name)
         bn = self.base_node
@@ -133,6 +124,8 @@ class ArrayedNode(Node):
             else:
                 name_for_copy = instance_name
 
+            sub = partial(self.index_re.sub, repl=self._make_repl_func(index))
+
             inst = base_node._copy(
                     name=name_for_copy,
                     descr=sub(string=self.descr or ''),
@@ -151,20 +144,16 @@ class ArrayedNode(Node):
     def __iter__(self):
         return (self._load_instance(i) for i in self._range_val)
 
-    def _parse_name(self, item:str):
-        name = ''.join(self._around_spans(item, self._parse_specs))
-        index = int(item[slice(*self._parse_specs[0])])
-        return name, index
-
     def __getitem__(self, item):
         if isinstance(item, str):
             if item in self._children:
                 return self._children[item]
-            elif item in self:
-                name, index = self._parse_name(item)
-                return self._load_instance(index)
             else:
-                raise KeyError(item)
+                try:
+                    index = self._parse_name(item)
+                except ValueError:
+                    raise KeyError(item)
+                return self._load_instance(index)
         elif isinstance(item,int):
             return self._load_instance(item)
         else:
@@ -189,5 +178,15 @@ class ArrayedNode(Node):
         if name in ('reg_offset', 'local_address'):
             return self.base_val
         else:
-            return super().__getattr__(name)
+            try:
+                return super().__getattr__(name)
+            except AttributeError as e:
+                try:
+                    index = self._parse_name(name)
+                except ValueError:
+                    raise e
+                return self._load_instance(index)
+
+    def __len__(self):
+        return len(range(self.start_index, self.end_index, self.incr_index))
 

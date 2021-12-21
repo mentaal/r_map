@@ -139,7 +139,6 @@ def test_arrayed_ref_register(reg):
     root._add(arrayed_reg)
 
     arrayed_reg_2 = arrayed_reg._copy(new_instance=True, new_alias=True, name='TX_FIFO2[nn]_[n]')
-    print(f"parse_specs: ", arrayed_reg_2._parse_specs)
 
     r1 = arrayed_reg[4]
     r1.value = 0x12
