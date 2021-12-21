@@ -185,7 +185,10 @@ class ArrayedNode(Node):
                     index = self._parse_name(name)
                 except ValueError:
                     raise e
-                return self._load_instance(index)
+                if index is not None:
+                    return self._load_instance(index)
+                else:
+                    raise e
 
     def __len__(self):
         return len(range(self.start_index, self.end_index, self.incr_index))
