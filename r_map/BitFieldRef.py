@@ -60,12 +60,17 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
         bf._references[self_id] = self
         ref_count = len(bf._references)
         if ref_count > 1:
-            # this line is a bit confusing an ambiguous. It doesn't intend to
-            # indicate that mulitple references from a bitfield means that some
-            # of the bitfieldrefs are aliases. The _alias boolean is used here
-            # when deserializing the bitfield to not make a copy and instead to
-            # use an already created instance
+            # this line is a bit confusing an ambiguous. It covers two
+            # scenarios:
+            # 1. the bitfield is an alias
+            # 2. the bitfield is referenced by 2 or more different registers. Or
+            # to rephrase, the bitfield spans multiple registers
+            # The _alias boolean is used here when deserializing the bitfield to
+            # not make a copy and instead to use an already created instance
             self._alias = True
+            # there is some confusion here as to what _alias means.
+            # it could mean what its name implies or it could mean that the
+            # bitfield is referenced by in part from multiple bit field references
             if not self._ref:
                 first_key = (bf._references.keys() - set([self_id])).pop()
                 self._ref = bf._references[first_key]
@@ -94,13 +99,12 @@ class BitFieldRef(UnsignedValueNodeMixin, Node):
         The difference is that if this object is an alias, do not instantiate
         copies of children. Merely add existing bitfield as this object's
         bitfield and inject self as a reference
-
         """
 
         if _context is None:
             _context = {}
 
-        deep_copy = not (new_alias or self._alias)
+        deep_copy = _deep_copy and not (new_alias or self._alias)
         new_obj = super()._copy(new_alias=new_alias, new_instance=new_instance,
                                 _context=_context, _deep_copy=deep_copy, **kwargs)
 
