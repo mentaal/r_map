@@ -2,3 +2,4 @@
 
 ## 0.8.0
 Fixed an issue with arrayed nodes where the starting index wasn't being respected
+Fix handling of deep_copy when it's not requested

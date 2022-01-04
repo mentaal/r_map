@@ -322,4 +322,16 @@ def test_bitfield_shorthand(reg):
     reg.bf2_ref = reg.bf2_ref.bf.reset_val + 1
     assert reg.bf2_ref == reg.bf2_ref.bf.reset_val + 1
 
+def test_deep_copy_reg(reg):
+    bf1_ref2 = reg.bf1_ref._copy(name='bf1_ref2')
+    assert bf1_ref2.bf is not reg.bf1_ref.bf
+
+def test_deep_copy_reg2(reg):
+    bf1_ref2 = reg.bf1_ref._copy(name='bf1_ref2', _deep_copy=False)
+    assert bf1_ref2.bf is reg.bf1_ref.bf
+
+def test_deep_copy_reg3(reg):
+    bf1_ref2 = reg.bf1_ref._copy(name='bf1_ref2', new_alias=True)
+    assert bf1_ref2.bf is reg.bf1_ref.bf
+
 
