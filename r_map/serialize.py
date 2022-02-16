@@ -18,6 +18,20 @@ from r_map import Node
 }
 """
 
+default_serialization_classes = {
+        'Node': r_map.Node,
+        'AddressedNode': r_map.AddressedNode,
+        'Register': r_map.Register,
+        'BitField': r_map.BitField,
+        'BitFieldRef': r_map.BitFieldRef,
+        'RegisterMap': r_map.RegisterMap,
+        'Enumeration': r_map.Enumeration,
+        'ArrayedNode': r_map.ArrayedNode,
+        'FixedAddressedNode': r_map.FixedAddressedNode,
+        'FixedRegisterMap': r_map.FixedRegisterMap,
+        'FixedRegister': r_map.FixedRegister,
+}
+
 def dump(node):
     dct = {}
     _dump(node, dct)
@@ -63,13 +77,29 @@ def _dump(node, objs:dict):
     objs[my_uuid] = {k:v for k,v in dct.items() if (v is not None and v is not False)}
     return my_uuid
 
-def load(dct:dict) -> Node:
+def load(dct:dict, class_overrides=None) -> Node:
+    if class_overrides:
+        unknowns = {k for k in class_overrides
+                        if k not in default_serialization_classes}
+        if unknowns:
+            raise ValueError(f'Unknown classes: {", ".join(unknowns)}')
+
+        for k in class_overrides:
+            if k not in default_serialization_classes:
+                raise ValueError
+            classes = dict(default_serialization_classes)
+            classes.update(class_overrides)
+    else:
+        classes = default_serialization_classes
+
     root_uuid = dct.get('root')
     if not root_uuid:
         raise ValueError("provided dictionary needs to contain a 'root'")
-    return _load(root_uuid, dct, {})
 
-def _load(my_uuid:str, dct:dict, already_loaded:dict) -> Node:
+    return _load(root_uuid, dct, {}, classes)
+
+def _load(my_uuid:str, dct:dict, already_loaded:dict, classes) -> Node:
+
     if not isinstance(dct, dict):
         raise ValueError(f"Expected dictionary type argument. Got {type(dct)}")
     if my_uuid in already_loaded:
@@ -78,12 +108,12 @@ def _load(my_uuid:str, dct:dict, already_loaded:dict) -> Node:
     #decode dict logic here
     entry = dct[my_uuid]
     type_name = entry.get('type')
-    T = getattr(r_map, type_name) if type_name else None
+    T = classes.get(type_name) if type_name else None
     ref_uuid = entry.get('_ref')
     if ref_uuid:
         ref_obj = already_loaded.get(ref_uuid, None)
         if ref_obj is None:
-            ref_obj = _load(ref_uuid, dct, already_loaded)
+            ref_obj = _load(ref_uuid, dct, already_loaded, classes)
         vals = {k:v for k,v in entry.items() if k in ref_obj._nb_attrs
                                              and v is not None}
         vals['uuid'] = my_uuid
@@ -95,14 +125,12 @@ def _load(my_uuid:str, dct:dict, already_loaded:dict) -> Node:
         vals['uuid'] = my_uuid
 
         if issubclass(T, r_map.ArrayedNode):
-            vals['base_node'] = _load(vals['base_node'], dct, already_loaded)
+            vals['base_node'] = _load(vals['base_node'], dct, already_loaded, classes)
         obj = T(**vals)
         children = entry.get('children')
         if children:
             for child_entry in children:
-                child_obj = _load(child_entry,
-                                  dct,
-                                  already_loaded)
+                child_obj = _load(child_entry, dct, already_loaded, classes)
                 obj._add(child_obj)
     else:
         raise ValueError(f"Could not _load data: {entry}")

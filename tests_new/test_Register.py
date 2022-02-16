@@ -97,6 +97,22 @@ def test_serialize_reg(reg):
     assert root2.reg1.bf2_ref is not root2.reg1_copy.bf2_ref
     assert root2.reg1.bf2_ref.uuid != root2.reg1_copy.bf2_ref.uuid
 
+def test_deserialize_reg_custom(reg):
+    root = r_map.Node(name='root')
+    root._add(reg)
+    prim = r_map.dump(root)
+
+    class RegisterCustom(r_map.Register):
+        pass
+
+    root_custom = r_map.load(prim, {'Register':RegisterCustom})
+    root2 = r_map.load(prim)
+
+    assert isinstance(root_custom.reg1, RegisterCustom)
+    assert isinstance(root2.reg1, r_map.Register)
+    assert not isinstance(root2.reg1, RegisterCustom)
+
+
 
 def test_arrayed_register(reg):
     arrayed_reg = r_map.ArrayedNode(
