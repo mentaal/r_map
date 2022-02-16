@@ -98,15 +98,16 @@ class ArrayedNode(Node):
         bn = self.base_node
         bn_is_arrayed = isinstance(bn, r_map.ArrayedNode)
         if not inst:
+            num_inc = (index - self.start_index) // self.incr_index
             if isinstance(bn, r_map.AddressedNode):
                 key = 'local_address'
-                inc = (index//self.incr_index)*self.increment
+                inc = num_inc*self.increment
             elif isinstance(bn, r_map.BitFieldRef):
                 key = 'reg_offset'
-                inc = (index//self.incr_index)*self.increment + self.base_val
+                inc = num_inc*self.increment + self.base_val
             elif bn_is_arrayed:
                 key = 'base_val'
-                inc = (index//self.incr_index)*self.increment
+                inc = num_inc*self.increment
             else:
                 raise ValueError(f"Unsupported base node type: {type(bn)} for Arrayed Register: {self}")
 
